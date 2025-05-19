@@ -10,7 +10,7 @@ def main(page: ft.Page):
     
     stringConexion = f"DRIVER={{SQL Server}}; SERVER={servidor}; DATABASE={basedatos}; Trusted_Connection=yes"   #  CADENA DE CONEXION
 
-    page.theme_mode = ft.ThemeMode.LIGHT
+    page.theme_mode = ft.ThemeMode.DARK
 
     lv = ft.ListView(expand=1, auto_scroll=True, spacing= 25, padding= 15, width= 1300)
     lista_depositos = ft.DataTable(
@@ -163,6 +163,7 @@ def main(page: ft.Page):
         except:
             alerta('EXCEPCION', 'OCURRIO UNA EXCEPCION AL GUARDAR INFORMACIÓN')
         limpiarControles()
+        controlesAdd()
         page.update()
 
 
@@ -200,6 +201,7 @@ def main(page: ft.Page):
         except:
             alerta('ALERTA', 'oOCURRIO UN ERROR AL INTENTAR ACTUALIZAR EL REGISTRO')
         limpiarControles()
+        controlesAdd()
         page.update()
 
 
@@ -252,7 +254,7 @@ def main(page: ft.Page):
     Longitud = ft.TextField(label='LONGITUD', width=450)    
     Activo = ft.Switch(label='ACTIVO', label_position=ft.LabelPosition.LEFT, visible= False)
 
-    # BOTONES PARA EL FORMULARIO
+    # BOTONES DEL FORMULARIO
     btnAgregar = ft.CupertinoFilledButton('AGREGAR', width= 120, opacity_on_click=0.3, border_radius=10, on_click=lambda _:depositoAdd())
     btnEditar = ft.CupertinoFilledButton('EDITAR', width= 120, opacity_on_click=0.3, border_radius=10, visible= False, on_click=lambda _:depositoUpdate())
     btnCancelarEdicion = ft.CupertinoFilledButton('CANCELAR', width= 120, opacity_on_click=0.3, border_radius=10, visible= False, on_click=lambda _:cancelAction())

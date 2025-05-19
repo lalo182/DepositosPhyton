@@ -3,13 +3,13 @@ from flet import *
 import pyodbc
 
 def main(page:ft.Page):
-    # servidor = 'ECI-SDMYT-001'
-    servidor = 'DESKTOP-SMKHTJB'
+    servidor = 'ECI-SDMYT-001'
+    # servidor = 'DESKTOP-SMKHTJB'
     basedatos = 'DepositoVehicular'
     
     stringConexion = f"DRIVER={{SQL Server}}; SERVER={servidor}; DATABASE={basedatos}; Trusted_Connection=yes"   #  CADENA DE CONEXION
 
-    page.theme_mode = ft.ThemeMode.LIGHT
+    page.theme_mode = ft.ThemeMode.DARK
     # ancho_win = 800
     # largo_win = 1000
     

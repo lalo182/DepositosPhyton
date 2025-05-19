@@ -3,11 +3,12 @@ import pyodbc
 
 def main(page:ft.Page):
     servidor = 'ECI-SDMYT-001'
+    # servidor = 'DESKTOP-SMKHTJB'
     basedatos = 'DepositoVehicular'
     
     stringConexion = f"DRIVER={{SQL Server}}; SERVER={servidor}; DATABASE={basedatos}; Trusted_Connection=yes"   #  CADENA DE CONEXION
 
-    page.theme_mode = ft.ThemeMode.LIGHT
+    page.theme_mode = ft.ThemeMode.DARK
     ancho_win = 750
     largo_win = 850
     page.window_height=largo_win
@@ -84,7 +85,7 @@ def main(page:ft.Page):
                 cells.append(ft.DataCell(ft.Text(col)))
             rows.append(ft.DataRow(cells=cells, on_select_changed=selectedrow))
         lista_regiones.rows = rows
-        page.update()
+        #page.update()
 
     def limpiarControles():
         regionId.value = ''
