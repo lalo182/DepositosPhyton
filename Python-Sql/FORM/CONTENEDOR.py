@@ -183,18 +183,6 @@ def main(page: ft.Page):
         if len(regdep) == 0 or status_save == True:
             limpiar_control(None)
 
-
-    # def fec_change(e): # navegacion entre meses
-    #     global mes
-    #     global anio
-    #     mes = (meses.index(drop_mes.value)+1)
-    #     anio = int(drop_anio.value)
-    #     din, dfi = calendar.monthrange(anio, mes)
-    #     itemsd.clear()
-    #     hoja.controls = items(42, din, dfi)
-    #     page.update()
-
-
     def find_dep(depop): # busca la opcion elegida (deposito)
         for dep in drop_depositos.options:
             if depop == dep.key:
@@ -225,12 +213,11 @@ def main(page: ft.Page):
                 limpiar_control,cancelar_sel
             )
         if len(regdep) == 0 or status_save == True:
+            region_sel = drop_region.value
             limpiar_control(None)
             ls = (drop_region.value).index('-') 
             idr = int(drop_region.value[:ls]) # extrae id de region
             drop_depositos.options = dep_options(idr)
-            print(drop_depositos.options)
-            #dep_options(idr)
             region_sel = drop_region.value
             page.update()
 
@@ -325,8 +312,8 @@ def main(page: ft.Page):
                 ft.DropdownOption(
                     # key=dep,
                     # content=ft.Text(value=dep)
-                    key = (str(dep[0])+'- '+dep[1]),
-                    content= ft.Text(str(dep[1]))
+                    key = (str(dep[0])+'-'+dep[1]),
+                    content= ft.Text(str(dep[0])+'-'+dep[1])
                 ),
             )
         return deps
@@ -398,6 +385,80 @@ def main(page: ft.Page):
                 dia.on_click = clickeable
         page.update
 
+    def consulta_rol(region):
+        global mes
+        global anio
+        
+        info_roles = '''SELECT Dep, Nombre, Listadia 
+                        FROM
+                        (SELECT Id as Dep, RazonSocial as Nombre, RegionId as Regid, T1.Listadia
+                        FROM Dbo.CatDepositoVehicular 
+                        INNER JOIN (SELECT Dias AS Listadia, DepositoVehicularId as Iddep FROM Dbo.DepositosRoles WHERE Anio = ? AND Mes = ?) AS T1
+                        ON Id=iddep WHERE Activo=1) as t2
+                        INNER JOIN
+                        Dbo.CatRegion
+                        ON Id=RegID WHERE id = ?'''
+        listdep = run_query(info_roles, (anio, mes, region,))
+
+        for d in listdep:
+            color_act = colors[0]
+            
+            #eliminar deposito seleccionado de la lista
+            opdep = find_dep((str(d[0])+'-'+d[1]))
+            if opdep != None:
+                drop_depositos.options.remove(opdep)
+            regdep.append(
+                Deposito(color_act, d[0],'Null','Null', d[1])
+            )
+            
+            days = d[2].split(',')
+            for dia in itemsd: # recorrido al arreglo de contenedores
+                if dia.bgcolor != ft.Colors.TRANSPARENT: # discrimina contenedores vacios
+                    pos = (dia.content.value)
+                    if pos in days: # marca rango seleccionado
+                        dia.bgcolor = color_act
+                       
+            colors.remove(color_act)
+
+        ###################################################################
+        #gestion de depositos almacenados
+        listadep.controls.clear()
+        mosaicos = []
+        for dep in regdep:
+            elemento = ft.ListTile(
+                leading=ft.Text(value=str(dep.iddep), color=ft.Colors.TRANSPARENT),
+                title=ft.Text(value=dep.nom),
+                trailing=ft.Container(
+                    width=60,
+                    height=30,
+                    content=ft.Row(
+                        controls=[
+                            ft.Column(controls=[
+                                ft.Container(
+                                    alignment=ft.Alignment(0.0, 0.0),
+                                    width=20,
+                                    height=20,
+                                    bgcolor=dep.color,
+                                    shape=ft.BoxShape.CIRCLE,
+                                )],
+                            ),
+                            ft.Column(controls=[
+                                ft.PopupMenuButton(
+                                    items=[
+                                        ft.PopupMenuItem(text='Seleccionar', on_click= select_listdep),
+                                        ft.PopupMenuItem(text='Descartar', on_click= delete_item)
+                                    ]
+                                )]
+                            )
+                        ]
+                    )
+                ),
+            )
+            mosaicos.append(elemento)
+        listadep.controls.extend(mosaicos)
+        
+        page.update()
+        
 
     def guardar_rol():
         global status_save
@@ -539,6 +600,11 @@ def main(page: ft.Page):
 
         if dlg!=None:
             page.close(dlg)
+
+        if region_sel != '':
+            ls = (drop_region.value).index('-') 
+            idr = int(drop_region.value[:ls]) # extrae id de region
+            consulta_rol(idr)
 
         page.update()
 
