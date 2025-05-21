@@ -88,60 +88,111 @@ def main(page: ft.Page):
     rango=[] # almacena el rango seleccionado
     itemsd=[] # almacen de contenedores para dias de mes
     regdep = [] # almacena caracteristicas y roles de los depositos
-    # condep=['1 - Deposito 1', '21 - Deposito 2', '136 - Deposito 3', '4 - Deposito 4'] # resultado consulta depositos
-    condep = []
-    # condep = depositosRolesDropDownList() # []
+    # condep=['1 - Deposito 1', '21 - Deposito 2', '136 - Deposito 3', '4 - Deposito 4'] # resultado consulta depositos    
 
-    global opdep
-    opdep = 0
+
+    global status_save
+    global region_sel
+    seleccion = [] # dias asignados a deposito
+    region_sel = ''
+    status_save = False
+    # global opdep
+    # opdep = 0
 
     def arranque(): # establece valor para dropdowns de mes y año        
         global mes
         global anio
         drop_mes.value = meses[mes-1]
-        drop_anio.value = str(anio)
-        depositosRolesDropDownList()        
+        drop_anio.value = str(anio)  
         page.update()
 
+
+    def select_listdep(e):
+        ref = ((((e.control.parent).parent).parent).parent).parent
+        idd = int(ref.leading.value)
+        
+        for dep in regdep:
+            if dep.iddep == idd:
+                dep.fei = ''
+                dep.fef = ''
+                move_element = dep
+
+                del regdep[regdep.index(dep)]
+            
+        regdep.append(move_element)
+        alerta('Registro Seleccionado', regdep[-1].nom)
     
-    def select_listdep(e): # acciones al seleccionar deposito
-        idd = int(e.control.leading.value)
-        if opdep == 1:
-            for dep in regdep:
-                if dep.iddep == idd:
-                    dep.fei = ''
-                    dep.fef = ''
-                    move_element = dep
-                    del regdep[regdep.index(dep)]                
-            regdep.append(move_element)
-            alerta('Registro Seleccionado', regdep[-1].nom)
-        if opdep == 2:
-            global mes
-            listadep.controls.remove(e.control)
-            for dep in regdep:
-                if dep.iddep == idd: #identifica deposito seleccionado
-                    #reintegra registro a lista depositos
-                    drop_depositos.options.append( 
-                        ft.DropdownOption(
-                            key=str(dep.iddep)+'-'+dep.nom,
-                            content=ft.Text(value=str(dep.iddep)+'-'+dep.nom)
-                        )
+    # def select_listdep(e): # acciones al seleccionar deposito
+    #     idd = int(e.control.leading.value)
+    #     if opdep == 1:
+    #         for dep in regdep:
+    #             if dep.iddep == idd:
+    #                 dep.fei = ''
+    #                 dep.fef = ''
+    #                 move_element = dep
+    #                 del regdep[regdep.index(dep)]                
+    #         regdep.append(move_element)
+    #         alerta('Registro Seleccionado', regdep[-1].nom)
+    #     if opdep == 2:
+    #         global mes
+    #         listadep.controls.remove(e.control)
+    #         for dep in regdep:
+    #             if dep.iddep == idd: #identifica deposito seleccionado
+    #                 #reintegra registro a lista depositos
+    #                 drop_depositos.options.append( 
+    #                     ft.DropdownOption(
+    #                         key=str(dep.iddep)+'-'+dep.nom,
+    #                         content=ft.Text(value=str(dep.iddep)+'-'+dep.nom)
+    #                     )
+    #                 )
+    #                 rehabilita_dias(dep.color, select_day) #rehabilita contenedores bloqueados de rango
+    #                 colors.append(dep.color)
+    #                 regdep.remove(dep)
+    #         page.update()
+
+
+    def delete_item(e):
+        ref = ((((e.control.parent).parent).parent).parent).parent
+        idd = int(ref.leading.value)
+
+        global mes
+        listadep.controls.remove(ref)
+        for dep in regdep:
+            if dep.iddep == idd: #identifica deposito seleccionado
+                #reintegra registro a lista depositos
+                drop_depositos.options.append( 
+                    ft.DropdownOption(
+                        key=str(dep.iddep)+'-'+dep.nom,
+                        content=ft.Text(value=str(dep.iddep)+'-'+dep.nom)
                     )
-                    rehabilita_dias(dep.color, select_day) #rehabilita contenedores bloqueados de rango
-                    colors.append(dep.color)
-                    regdep.remove(dep)
-            page.update()
+                )
+                rehabilita_dias(dep.color, select_day) #rehabilita contenedores bloqueados de rango
+                colors.append(dep.color)
+                regdep.remove(dep)
+        page.update()
 
 
     def fec_change(e): # navegacion entre meses
-        global mes
-        global anio
-        mes = (meses.index(drop_mes.value)+1)
-        anio = int(drop_anio.value)
-        din, dfi = calendar.monthrange(anio, mes)
-        itemsd.clear()
-        hoja.controls = items(42, din, dfi)
-        page.update()
+        global status_save
+        if len(regdep) > 0 and status_save == False:
+            question_alert(
+                'Info',
+                'Con esta accción se perderán los cambios ¿Desea continuar?',
+                limpiar_control,cancelar_sel
+            )
+        if len(regdep) == 0 or status_save == True:
+            limpiar_control(None)
+
+
+    # def fec_change(e): # navegacion entre meses
+    #     global mes
+    #     global anio
+    #     mes = (meses.index(drop_mes.value)+1)
+    #     anio = int(drop_anio.value)
+    #     din, dfi = calendar.monthrange(anio, mes)
+    #     itemsd.clear()
+    #     hoja.controls = items(42, din, dfi)
+    #     page.update()
 
 
     def find_dep(depop): # busca la opcion elegida (deposito)
@@ -150,6 +201,38 @@ def main(page: ft.Page):
                 return dep
         return None
 
+
+    def question_alert(titulo, mensaje, funcionsi, funcion_no):
+        dlg = ft.AlertDialog(
+            modal=True,
+            title=ft.Text(titulo),
+            content=ft.Text(mensaje),
+            actions=[
+                ft.TextButton("Si", on_click= lambda _: funcionsi(dlg)),
+                ft.TextButton("No", on_click=lambda _: funcion_no(dlg)),
+            ]
+        )
+        page.open(dlg)
+
+
+    def reg_change(e): # acciones post seleccion de region
+        global status_save
+        global region_sel
+        if len(regdep) > 0 and status_save == False:
+            question_alert(
+                'Info',
+                'Con esta accción se perderán los cambios ¿Desea continuar?',
+                limpiar_control,cancelar_sel
+            )
+        if len(regdep) == 0 or status_save == True:
+            limpiar_control(None)
+            ls = (drop_region.value).index('-') 
+            idr = int(drop_region.value[:ls]) # extrae id de region
+            drop_depositos.options = dep_options(idr)
+            print(drop_depositos.options)
+            #dep_options(idr)
+            region_sel = drop_region.value
+            page.update()
 
     def dep_change(e): # acciones post seleccion de deposito
         color_act = colors[0]
@@ -172,13 +255,31 @@ def main(page: ft.Page):
                 leading=ft.Text(value=str(dep.iddep), color=ft.Colors.TRANSPARENT),
                 title=ft.Text(value=dep.nom),
                 trailing=ft.Container(
-                    alignment=ft.Alignment(-1.0, 0.0),
-                    width=20,
-                    height=20,
-                    bgcolor=dep.color,
-                    shape=ft.BoxShape.CIRCLE
+                    width=60,
+                    height=30,
+                    content=ft.Row(
+                        controls=[
+                            ft.Column(controls=[
+                                ft.Container(
+                                    alignment=ft.Alignment(0.0, 0.0),
+                                    width=20,
+                                    height=20,
+                                    bgcolor=dep.color,
+                                    shape=ft.BoxShape.CIRCLE,
+                                )],
+                            ),
+                            ft.Column(controls=[
+                                ft.PopupMenuButton(
+                                    items=[
+                                        ft.PopupMenuItem(text='Seleccionar', on_click= select_listdep),
+                                        ft.PopupMenuItem(text='Descartar', on_click= delete_item)
+                                    ]
+                                )]
+                            )
+                        ]
+                    )
                 ),
-                on_click=select_listdep,
+                #on_click=select_listdep,
             )
             mosaicos.append(elemento)
         listadep.controls.extend(mosaicos)
@@ -214,21 +315,37 @@ def main(page: ft.Page):
         return anios
 
 
-    def dep_options(): # deplegable de depositos
+    def dep_options(regionId): # deplegable de depositos
         deps = []
-        for dep in condep:
+        # condep = depositosRolesDropDownList()
+        consultaSql = 'SELECT Id, RazonSocial FROM CatDepositoVehicular WHERE Activo = 1 AND RegionId = ?'
+        depositosDb = run_query(consultaSql, (regionId,))
+        for dep in depositosDb:
             deps.append(
                 ft.DropdownOption(
-                    key=dep,
-                    content=ft.Text(value=dep)
+                    # key=dep,
+                    # content=ft.Text(value=dep)
+                    key = (str(dep[0])+'- '+dep[1]),
+                    content= ft.Text(str(dep[1]))
                 ),
             )
         return deps
     
 
-    def opdeps(op):
-        global opdep
-        opdep = op
+    def reg_options(): # deplegable de regiones
+        regs = []
+        consultaSql = 'SELECT Id, NombreRegion FROM CatRegion WHERE Activo = 1'
+        regionesDb = run_query(consultaSql)
+        for reg in regionesDb:
+            regs.append(
+                ft.DropdownOption(
+                    # key=reg,
+                    # content=ft.Text(value=reg)
+                    key = (str(reg[0])+'- '+ reg[1]),
+                    content= ft.Text(str(reg[1]))
+                ),
+            )
+        return regs
     
 
     def select_day(e): # seleccion rango de dias
@@ -282,6 +399,43 @@ def main(page: ft.Page):
         page.update
 
 
+    def guardar_rol():
+        global status_save
+        global anio
+        global mes
+        cad_dia = ''
+        for dep in regdep:
+            for dia in itemsd:
+                if dia.bgcolor == dep.color:
+                    valor = (dia.content.value)
+                    if cad_dia == '':
+                        cad_dia = valor
+                    else:
+                        cad_dia = cad_dia+','+valor
+            query_rol = 'SELECT [DepositoVehicularId] FROM [dbo].[DepositosRoles] WHERE [DepositoVehicularId]=? AND [Mes]=? AND [Anio]=?'
+            rolqry = run_query(query_rol, (dep.iddep, mes, anio,))
+
+            if rolqry:
+                act_rol ='UPDATE [dbo].[DepositosRoles] set [Dias]=? WHERE [DepositoVehicularId]=? AND [Mes]=? AND [Anio]=?'
+                run_query(act_rol,(cad_dia, dep.iddep, mes, anio,))
+            else:
+                insert_rol = '''INSERT INTO [dbo].[DepositosRoles]
+                                ([DepositoVehicularId]
+                                ,[Anio]
+                                ,[Mes]
+                                ,[Dias]
+                                ,[CreadoPor]
+                                ,[FechaCreacion]
+                                ,[ActualizadoPor]
+                                ,[FechaActualizacion]
+                                ,[Activo])
+                            VALUES(?,?,?,?,1,getdate(),1,getdate(),1)'''
+                run_query(insert_rol,(dep.iddep, anio, mes, cad_dia))
+            cad_dia=''
+        status_save=True
+        alerta('AVISO', 'REGISTRO GUARDADO CORRECTAMENTE')
+
+
     def head(sem): # encabezado nombre dias
         days = []
         for dia in sem:
@@ -291,7 +445,7 @@ def main(page: ft.Page):
                     alignment=ft.Alignment(0.0, 0.0),
                     width=tam,
                     height=2*sep,
-                    bgcolor=ft.Colors.BLUE_GREY_700,
+                    bgcolor=ft.Colors.BLUE_GREY_300,
                     border_radius=ft.BorderRadius(5,5,5,5),
                 )
             )
@@ -359,13 +513,69 @@ def main(page: ft.Page):
     )
 
 
+    def limpiar_control(dlg): #limpia la lista de depositos y habilita la hoja del calendario
+        #seccion calendario
+        global mes
+        global anio
+        global status_save
+        mes = (meses.index(drop_mes.value)+1)
+        anio = int(drop_anio.value)
+        din, dfi = calendar.monthrange(anio, mes)
+        itemsd.clear()
+        hoja.controls = items(42, din, dfi)
+        
+        #seccion depositos
+        listadep.controls.clear()
+        for dep in regdep:
+            drop_depositos.options.append( 
+                ft.DropdownOption(
+                    key=str(dep.iddep)+'-'+dep.nom,
+                    content=ft.Text(value=str(dep.iddep)+'-'+dep.nom)
+                )
+            )
+            colors.append(dep.color)
+        regdep.clear()
+        status_save = False
+
+        if dlg!=None:
+            page.close(dlg)
+
+        page.update()
+
+
+    def cancelar_sel(dlg):
+        global region_sel
+        page.close(dlg)
+        drop_mes.value = meses[mes-1]
+        drop_anio.value = anio
+        drop_region.value = region_sel
+        page.update()
+
+
+    dias_sem = ft.Row( # encabezado (dias de la semana) en fila
+        wrap=True,
+        width=(tam*7)+(sep*6),
+        height=(sep+5),
+        spacing=sep,
+        controls=head(semana)
+    )
+
+
     drop_mes = ft.Dropdown( # lista deplegable meses
         editable=True,
-        #label='Mes',
         options=moth_options(),
         text_align = ft.TextAlign.CENTER,
         on_change=fec_change,
     )
+
+
+    # drop_mes = ft.Dropdown( # lista deplegable meses
+    #     editable=True,
+    #     #label='Mes',
+    #     options=moth_options(),
+    #     text_align = ft.TextAlign.CENTER,
+    #     on_change=fec_change,
+    # )
 
 
     drop_anio = ft.Dropdown( # listadesplegable años
@@ -379,10 +589,20 @@ def main(page: ft.Page):
     drop_depositos = ft.Dropdown( # lista desplegable depositos
         editable=True,
         label='Deposito:',
-        options=dep_options(),
+        options=[],
         text_align=ft.TextAlign.CENTER,
         width=350,
         on_change=dep_change,        
+    )
+
+
+    drop_region = ft.Dropdown( # lista desplegable regiones
+        editable=True,
+        label='Region:',
+        options=reg_options(),
+        text_align=ft.TextAlign.CENTER,
+        width=350,
+        on_change=reg_change,
     )
 
 
@@ -392,32 +612,15 @@ def main(page: ft.Page):
         controls=[drop_mes, drop_anio], alignment=ft.MainAxisAlignment.CENTER
     )
 
-    #Botones control de lista depositos
-    btn_updsel = ft.CupertinoFilledButton(
-        'Activar seleccion',
-        width=160, 
-        height=50,
-        opacity_on_click=0.3, 
-        border_radius=10, 
-        on_click=lambda _:opdeps(1)
-    )
 
-
-    btn_delsel = ft.CupertinoFilledButton(
-        'Descartar seleccion',
+    btn_guardar = ft.CupertinoFilledButton(
+        'Guardar',
         width=180,
         height=50,
         opacity_on_click=0.3, 
         border_radius=10, 
-        on_click=lambda _:opdeps(2)
+        on_click=lambda _:guardar_rol()
     )
-
-
-
-
-
-
-
 
 
 
@@ -434,7 +637,7 @@ def main(page: ft.Page):
         Id.value = ''
         RazonSocial.value = ''
         RepresentanteLegal.value = ''
-        MunicipioId.value = ''
+        municipioSelectRegion.value = ''
         DireccionDeposito.value = ''
         NombreCompletoContactos.value = ''
         CorreoElectronicoContacto.value = ''
@@ -467,7 +670,7 @@ def main(page: ft.Page):
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
     # LIST VIEW PARA MOSTRAR LAS REGIONES
     lv = ft.ListView(expand=1, auto_scroll=True)
-    listadep = ft.ListView(spacing=5, auto_scroll=True, width=350)
+    listadep = ft.ListView(spacing=5, auto_scroll=True, width=400)
     lista_regiones = ft.DataTable(
         columns=[
             ft.DataColumn(ft.Text('ID')),
@@ -490,7 +693,7 @@ def main(page: ft.Page):
             ft.DataColumn(ft.Text('RAZÓN SOCIAL')),
             ft.DataColumn(ft.Text('REPRESENTANTE LEGAL')),
             ft.DataColumn(ft.Text('DIRECCIÓN')),
-            ft.DataColumn(ft.Text('MUNICIPIO')),
+            ft.DataColumn(ft.Text('REGIÓN')),
             ft.DataColumn(ft.Text('TELEFONOS'))
         ], rows=[]
     )   
@@ -520,10 +723,10 @@ def main(page: ft.Page):
                          ,RazonSocial
                          ,RepresentanteLegal
                          ,DireccionDeposito
-                         ,cm.Municipio
+                         ,cr.NombreRegion
                          ,Telefonos
                      FROM CatDepositoVehicular cdv 
-               INNER JOIN CatMunicipio cm ON cdv.MunicipioId = cm.Id'''
+               INNER JOIN CatRegion cr ON cdv.RegionId = cr.Id'''
         depositosDb = run_query(consultaSql)
         lv.controls.clear()
         lv.controls.append(lista_depositos)
@@ -585,7 +788,7 @@ def main(page: ft.Page):
         NombreCompletoContactos.value = str(depositoDB[0][4])
         Telefonos.value = str(depositoDB[0][5])
         DireccionDeposito.value = str(depositoDB[0][6])
-        MunicipioId.value = str(depositoDB[0][7])+ '- ' + str(depositoDB[0][8])
+        municipioSelectRegion.value = str(depositoDB[0][7])+ '- ' + str(depositoDB[0][8])
         Latitud.value = str(depositoDB[0][9])
         Longitud.value = str(depositoDB[0][10])
         Activo.value = bool(depositoDB[0][11])
@@ -637,15 +840,15 @@ def main(page: ft.Page):
         page.update()
 
 
-    def municipioSeleccionado():
-        textoSeleccionado = MunicipioId.value
-        posicion = textoSeleccionado.find('-')
-        if posicion != -1:
-            valor = textoSeleccionado[:posicion]
-            return valor
-        else:
-            alerta('ALERTA', 'OCURRIO UN ERROR AL SELECCIONAR EL ELEMENTO')
-        page.update()
+    # def municipioSeleccionado():
+    #     textoSeleccionado = MunicipioId.value
+    #     posicion = textoSeleccionado.find('-')
+    #     if posicion != -1:
+    #         valor = textoSeleccionado[:posicion]
+    #         return valor
+    #     else:
+    #         alerta('ALERTA', 'OCURRIO UN ERROR AL SELECCIONAR EL ELEMENTO')
+    #     page.update()
 
 
     def regionesDropDownList():
@@ -663,29 +866,19 @@ def main(page: ft.Page):
         page.update()
 
 
-    def municipiosDropDownList():
-        consultaSql = 'SELECT Id, UPPER(Municipio) FROM [CatMunicipio] ORDER BY Id'
-        municipiosDb = run_query(consultaSql)
-        for row in municipiosDb:            
-            MunicipioId.options.append(
-                ft.DropdownOption(
-                    key = (str(row[0])+'- '+ row[1]),
-                    content= ft.Text(
-                        str(row[1])
-                    )                    
-                )
-            )
-        page.update()
-
-
-    def depositosRolesDropDownList():
-        consultaSql = 'SELECT Id, RazonSocial FROM CatDepositoVehicular WHERE Activo = 1'
-        depositosDb = run_query(consultaSql)   
-        return depositosDb     
-        # for row in depositosDb:
-        #     condep.append(str(row[0])+'-'+ row[1])
-        # print('condep:')
-        # print(condep)        
+    # def municipiosDropDownList():
+    #     consultaSql = 'SELECT Id, UPPER(Municipio) FROM [CatMunicipio] ORDER BY Id'
+    #     municipiosDb = run_query(consultaSql)
+    #     for row in municipiosDb:            
+    #         MunicipioId.options.append(
+    #             ft.DropdownOption(
+    #                 key = (str(row[0])+'- '+ row[1]),
+    #                 content= ft.Text(
+    #                     str(row[1])
+    #                 )                    
+    #             )
+    #         )
+    #     page.update()
 
 
     def regionesAdd():
@@ -751,19 +944,20 @@ def main(page: ft.Page):
         NombreCompletoContactosAttr = NombreCompletoContactos.value
         TelefonosAttr = Telefonos.value
         DireccionDepositoAttr = DireccionDeposito.value
-        MunicipioIdAttr = municipioSeleccionado()
+        # MunicipioIdAttr = municipioSeleccionado()
+        RegionIdAttr = regionSeleccionada()
         LatitudAttr = Latitud.value
         LongitudAttr = Longitud.value
         CreadoPorAdminIdAttr = 1
         ActualizadoPorAdminIdAttr = 1
         consultaSql = '''INSERT INTO CatDepositoVehicular
                         (RazonSocial, RepresentanteLegal, CorreoElectronicoContacto, NombreCompletoContactos
-                        ,Telefonos, DireccionDeposito, MunicipioId, Latitud, Longitud
+                        ,Telefonos, DireccionDeposito, RegionId, Latitud, Longitud
                         ,CreadoPorAdminId, FechaCreacion, ActualizadoPorAdminId, FechaActualizacion, Activo)
                     VALUES(?,?,?,?,?,?,?,?,?,?,GETDATE(),?,GETDATE(),1)'''
         try:
             run_query(consultaSql, (RazonSocialAttr, RepresentanteLegalAttr, CorreoElectronicoContactoAttr, NombreCompletoContactosAttr
-                                   ,TelefonosAttr, DireccionDepositoAttr, int(MunicipioIdAttr), LatitudAttr, LongitudAttr
+                                   ,TelefonosAttr, DireccionDepositoAttr, int(RegionIdAttr), LatitudAttr, LongitudAttr
                                    ,int(CreadoPorAdminIdAttr), int(ActualizadoPorAdminIdAttr),))
             alerta('EXITOSO', 'REGISTRO GUARDADO EXITOSAMENTE: ' + RazonSocialAttr)
             depositosLista()
@@ -781,7 +975,8 @@ def main(page: ft.Page):
         NombreCompletoContactosAttr = NombreCompletoContactos.value
         TelefonosAttr = Telefonos.value
         DireccionDepositoAttr = DireccionDeposito.value
-        MunicipioIdAttr = municipioSeleccionado()
+        # MunicipioIdAttr = municipioSeleccionado()
+        RegionIdAttr = regionSeleccionada()
         LatitudAttr = Latitud.value
         LongitudAttr = Longitud.value
         ActivoAttr = Activo.value
@@ -802,7 +997,7 @@ def main(page: ft.Page):
                             WHERE Id = ?'''
         try:
             run_query(consultaSql, (RazonSocialAttr, RepresentanteLegalAttr, CorreoElectronicoContactoAttr, NombreCompletoContactosAttr
-                                   ,TelefonosAttr, DireccionDepositoAttr, MunicipioIdAttr, LatitudAttr, LongitudAttr, ActivoAttr, IdAttr))
+                                   ,TelefonosAttr, DireccionDepositoAttr, RegionIdAttr, LatitudAttr, LongitudAttr, ActivoAttr, IdAttr))
             alerta('EXITOSO', 'REGISTRO ACTUALIZADO EXITOSAMENTE: ' + RazonSocialAttr)
             depositosLista()
         except:
@@ -824,7 +1019,8 @@ def main(page: ft.Page):
     Id = ft.TextField(label='Id', width= 70, read_only= True)
     RazonSocial = ft.TextField(label='RAZON SOCIAL', width= 565)
     RepresentanteLegal = ft.TextField(label='REPRESENTANTE LEGAL', width= 565)
-    MunicipioId = Dropdown(label= 'MUNICIPIO', width=500, enable_filter= True, editable= True) #, on_change=lambda _:regionSeleccionada())
+    # MunicipioId = Dropdown(label= 'MUNICIPIO', width=500, enable_filter= True, editable= True) #, on_change=lambda _:regionSeleccionada())
+    municipioSelectRegion = Dropdown(label= 'REGIÓN', width=500, enable_filter= True, editable= True)
     DireccionDeposito = ft.TextField(label='DIRECCIÓN', width= 700)
     NombreCompletoContactos = ft.TextField(label='NOMBRE DE CONTACTO', width= 450)
     CorreoElectronicoContacto = ft.TextField(label='CORREO ELECTRONICO', width= 400)
@@ -951,7 +1147,7 @@ def main(page: ft.Page):
     def show_Depositos():
         page.controls.clear()
         texto = ft.Text('CATÁLOGO DE DEPOSITOS', size= 30)
-        btnAgregarRegistro.on_click = lambda _:depositoAdd()()
+        btnAgregarRegistro.on_click = lambda _:depositoAdd()
         btnEditarRegistro.on_click = lambda _:depositoUpdate()
         btnCancelarAccionForm.on_click = lambda _:botonesCancelarAccionForm()
         page.add(texto)
@@ -974,7 +1170,7 @@ def main(page: ft.Page):
                 vertical_alignment= ft.CrossAxisAlignment.CENTER,
                 controls=[
                     ft.Column(
-                        controls=[MunicipioId]
+                        controls=[municipioSelectRegion]
                     ),
                     ft.Column(
                         controls=[DireccionDeposito]
@@ -1027,14 +1223,14 @@ def main(page: ft.Page):
             )
         )
         depositosLista()
-        municipiosDropDownList()
+        # municipiosDropDownList()
+        regionesDropDownList()
         botonesAgregar()
 
 
     def show_RolesDepositos():
         page.controls.clear()
-        texto = ft.Text('ROLES DE DEPOSITOS', size= 30)
-        
+        texto = ft.Text('ROLES DE DEPOSITOS', size= 30)        
         page.add(texto)
         page.add(
             ft.Row(
@@ -1063,9 +1259,10 @@ def main(page: ft.Page):
                                 alignment= ft.Alignment(-1.0, 0.0),
                                 content= ft.Column(
                                     controls=[
+                                        ft.Row(controls=[drop_region], alignment=ft.Alignment(-1.0, 0.0)),
                                         ft.Row(controls=[drop_depositos], alignment=ft.Alignment(-1.0, 0.0)),
-                                        ft.Row(controls=[listadep], alignment=ft.Alignment(-1.0, 0.0), height=400),
-                                        ft.Row(controls=[btn_updsel, btn_delsel], alignment=ft.Alignment(-1.0, 0.0))
+                                        ft.Row(controls=[listadep], alignment=ft.Alignment(-1.0, 0.0), height=350, width=500),
+                                        ft.Row(controls=[btn_guardar], alignment=ft.MainAxisAlignment.CENTER, width=300),
                                     ]
                                 )                                
                             )
