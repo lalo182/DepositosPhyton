@@ -1,6 +1,17 @@
 import flet as ft
-from flet import *
 import pyodbc
+import calendar
+
+from flet import *
+from datetime import datetime
+
+class Deposito(): # Diseñado para almacenar informacion para los depositos
+        def __init__(self, color, id, fec_ini, fec_fin, nombre):
+            self.color = color
+            self.iddep = id
+            self.fei = fec_ini
+            self.fef = fec_fin  
+            self.nom = nombre
 
 
 def main(page: ft.Page):
@@ -8,7 +19,6 @@ def main(page: ft.Page):
     # page.bgcolor = ft.Colors.LIGHT_BLUE_100 # ft.Colors.BLUE_GREY_800
     page.title = 'DEPOSITOS VEHICULARES'
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
-
 
     ancho_win = 1100
     largo_win = 950
@@ -21,13 +31,10 @@ def main(page: ft.Page):
 
     # page.window.min_width=ancho_win
     # page.window.min_height=largo_win
-
-
-
     anchocol = 220
 
-    servidor = 'ECI-SDMYT-001'
-    # servidor = 'DESKTOP-SMKHTJB'
+    # servidor = 'ECI-SDMYT-001'
+    servidor = 'DESKTOP-SMKHTJB'
     basedatos = 'DepositoVehicular'
     
     stringConexion = f"DRIVER={{SQL Server}}; SERVER={servidor}; DATABASE={basedatos}; Trusted_Connection=yes"   #  CADENA DE CONEXION
@@ -52,7 +59,367 @@ def main(page: ft.Page):
     def alerta(titulo, mensaje):
         dlg = ft.AlertDialog(title= ft.Text(titulo), content= ft.Text(mensaje))
         page.open(dlg)
+
     
+    tam =70 #tamaño contenedores dias calendario
+    sep = 10 #separacion entre cuadros
+    semana = ['Dom','Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab']
+    meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
+
+    colors=[
+        ft.Colors.GREEN_600, 
+        ft.Colors.ORANGE_700, 
+        ft.Colors.BLUE_800, 
+        ft.Colors.BROWN_200, 
+        ft.Colors.CYAN_800, 
+        ft.Colors.DEEP_PURPLE_700, 
+        ft.Colors.PINK_ACCENT_400, 
+        ft.Colors.RED_ACCENT_700, 
+        ft.Colors.TEAL_700, 
+        ft.Colors.WHITE60
+    ]
+
+    global mes
+    global anio
+    mes = int(datetime.now().month) # mes actual
+    anio = int (datetime.now().year) # año actual
+   
+    din, dfi = calendar.monthrange(anio, mes) # obtiene el dia en que inicia el mes y el total de dias que conforman el mes
+    rango=[] # almacena el rango seleccionado
+    itemsd=[] # almacen de contenedores para dias de mes
+    regdep = [] # almacena caracteristicas y roles de los depositos
+    # condep=['1 - Deposito 1', '21 - Deposito 2', '136 - Deposito 3', '4 - Deposito 4'] # resultado consulta depositos
+    condep = []
+    # condep = depositosRolesDropDownList() # []
+
+    global opdep
+    opdep = 0
+
+    def arranque(): # establece valor para dropdowns de mes y año        
+        global mes
+        global anio
+        drop_mes.value = meses[mes-1]
+        drop_anio.value = str(anio)
+        depositosRolesDropDownList()        
+        page.update()
+
+    
+    def select_listdep(e): # acciones al seleccionar deposito
+        idd = int(e.control.leading.value)
+        if opdep == 1:
+            for dep in regdep:
+                if dep.iddep == idd:
+                    dep.fei = ''
+                    dep.fef = ''
+                    move_element = dep
+                    del regdep[regdep.index(dep)]                
+            regdep.append(move_element)
+            alerta('Registro Seleccionado', regdep[-1].nom)
+        if opdep == 2:
+            global mes
+            listadep.controls.remove(e.control)
+            for dep in regdep:
+                if dep.iddep == idd: #identifica deposito seleccionado
+                    #reintegra registro a lista depositos
+                    drop_depositos.options.append( 
+                        ft.DropdownOption(
+                            key=str(dep.iddep)+'-'+dep.nom,
+                            content=ft.Text(value=str(dep.iddep)+'-'+dep.nom)
+                        )
+                    )
+                    rehabilita_dias(dep.color, select_day) #rehabilita contenedores bloqueados de rango
+                    colors.append(dep.color)
+                    regdep.remove(dep)
+            page.update()
+
+
+    def fec_change(e): # navegacion entre meses
+        global mes
+        global anio
+        mes = (meses.index(drop_mes.value)+1)
+        anio = int(drop_anio.value)
+        din, dfi = calendar.monthrange(anio, mes)
+        itemsd.clear()
+        hoja.controls = items(42, din, dfi)
+        page.update()
+
+
+    def find_dep(depop): # busca la opcion elegida (deposito)
+        for dep in drop_depositos.options:
+            if depop == dep.key:
+                return dep
+        return None
+
+
+    def dep_change(e): # acciones post seleccion de deposito
+        color_act = colors[0]
+        ls = (drop_depositos.value).index('-') 
+        idd = int(drop_depositos.value[:ls]) # extrae id de deposito
+        color = color_act # asigna color para seleccion de rango
+        nom = drop_depositos.value[ls+1:] # extrae nombre del deposito        
+        #eliminar deposito seleccionado de la lista
+        opdep = find_dep(drop_depositos.value)
+        if opdep != None:
+            drop_depositos.options.remove(opdep)
+        regdep.append(
+            Deposito(color, idd,'','', nom)
+        )
+        #gestion de depositos seleccionados
+        listadep.controls.clear()
+        mosaicos = []
+        for dep in regdep:
+            elemento = ft.ListTile(
+                leading=ft.Text(value=str(dep.iddep), color=ft.Colors.TRANSPARENT),
+                title=ft.Text(value=dep.nom),
+                trailing=ft.Container(
+                    alignment=ft.Alignment(-1.0, 0.0),
+                    width=20,
+                    height=20,
+                    bgcolor=dep.color,
+                    shape=ft.BoxShape.CIRCLE
+                ),
+                on_click=select_listdep,
+            )
+            mosaicos.append(elemento)
+        listadep.controls.extend(mosaicos)
+        drop_depositos.visible = False
+        colors.remove(color_act)
+        page.update()
+        if len(regdep) == 1:
+            alerta('Info', 'Selecciona rango de fechas')
+
+    
+    def moth_options(): # desplegable de meses
+        options = []
+        for m in meses: # consulta a arreglo de meses y los convierte en opcion del desplegable
+            options.append(
+                ft.DropdownOption(
+                    key=m,
+                    content=ft.Text(value=m)
+                ),
+            )
+        return options
+
+
+    def anio_options(): # desplegable de años
+        global anio
+        anios =[]
+        for a in range(anio-5,anio+5): # muestra rango de 10 años
+            anios.append(
+                ft.DropdownOption(
+                    key=a,
+                    content=ft.Text(value=(str(a)))
+                ),
+            )
+        return anios
+
+
+    def dep_options(): # deplegable de depositos
+        deps = []
+        for dep in condep:
+            deps.append(
+                ft.DropdownOption(
+                    key=dep,
+                    content=ft.Text(value=dep)
+                ),
+            )
+        return deps
+    
+
+    def opdeps(op):
+        global opdep
+        opdep = op
+    
+
+    def select_day(e): # seleccion rango de dias
+        global mes
+        global anio
+        if len(regdep) > 0: # validacion seleccion de deposito
+            if regdep[-1].fef == '': # validacion de termino de registro deposito
+                if len(rango)<2: # se encarga de identificar rango de dias y lo almacena en una arreglo
+                    diasel = e.control.content.value
+                    e.control.bgcolor=ft.Colors.GREEN_ACCENT_400
+                    e.control.update()
+                    rango.append(int(diasel))
+                if len(rango)==2: # acciones posteriores a idenrificar el rango
+                    if rango[0]<rango[1]: # ordena el rango para identificar inferior y superior
+                        inf=rango[0]
+                        sup=rango[1]
+                    else:
+                        inf=rango[1]
+                        sup=rango[0]
+                    recorrer_hoja(inf,sup,regdep[-1].color, False)
+                    regdep[-1].fei = str(inf)+'/'+str(mes)+'/'+str(anio)
+                    regdep[-1].fef = str(sup)+'/'+str(mes)+'/'+str(anio)
+                    drop_depositos.visible = True
+                    rango.clear()
+                    page.update()
+        else:
+            alerta('Info','Debes seleccionar un deposito')
+
+
+    def on_hover(e): # animacion al colocar cursor sobre contenedores
+        if e.control.bgcolor == ft.Colors.BLUE_GREY_500 or e.control.bgcolor == ft.Colors.BLUE_GREY_400:
+            e.control.bgcolor = ft.Colors.BLUE_GREY_400 if e.data == 'true' else ft.Colors.BLUE_GREY_500
+        e.control.update()
+
+
+    def recorrer_hoja(din,dfi,color, clickeable): # marca el rango seleccionado
+        for dia in itemsd: # recorrido al arreglo de contenedores
+            if dia.bgcolor != ft.Colors.TRANSPARENT: # discrimina contenedores vacios
+                pos = (int(dia.content.value))
+                if pos>=din and pos<=dfi and dia.bgcolor==ft.Colors.BLUE_GREY_500 or dia.bgcolor==ft.Colors.GREEN_ACCENT_400: # marca rango seleccionado
+                    dia.bgcolor = color
+                    dia.on_click = clickeable
+        page.update()
+
+
+    def rehabilita_dias(color, clickeable):
+        for dia in itemsd:
+            if dia.bgcolor == color:
+                dia.bgcolor = ft.Colors.BLUE_GREY_500
+                dia.on_click = clickeable
+        page.update
+
+
+    def head(sem): # encabezado nombre dias
+        days = []
+        for dia in sem:
+            days.append(
+                ft.Container(
+                    content=ft.Text(value=dia),
+                    alignment=ft.Alignment(0.0, 0.0),
+                    width=tam,
+                    height=2*sep,
+                    bgcolor=ft.Colors.BLUE_GREY_700,
+                    border_radius=ft.BorderRadius(5,5,5,5),
+                )
+            )
+        return days
+
+
+    def items(count,di,df): # dibuja los contenedores que muestran los dias del calendario        
+        diaini = di+1
+        for i in range(1, count + 1): # recorrido para el dibujo de n contenedores (42)
+            if di==6: # En caso de que mes inicie en domingo establece el recorrido en la promera posicion
+                diaini = 0
+                if i>=diaini and (i-(diaini))<=df: # rango dias de mes
+                    itemsd.append(
+                        ft.Container(
+                            content=ft.Text(value=str(i-(diaini))),
+                            alignment=ft.Alignment(0.0, 0.0),
+                            width=tam,
+                            height=tam,
+                            bgcolor=ft.Colors.BLUE_GREY_500,
+                            border_radius=ft.BorderRadius(5,5,5,5),
+                            on_click=select_day,
+                            on_hover=on_hover,
+                        )
+                    )           
+            if i<=diaini: # dibuja el contenedor pero no le da valor
+                itemsd.append(
+                    ft.Container(
+                        alignment=ft.Alignment(0.0, 0.0),
+                        width=tam,
+                        height=tam,
+                        bgcolor=ft.Colors.TRANSPARENT,
+                    )
+                )
+            if i>=diaini and (i-(diaini-1))<=df and diaini>0: # se encarga del dibujo de contenedores en caso de no iniciar el mes en domingo
+                itemsd.append(
+                    ft.Container(
+                        content=ft.Text(value=str(i-(diaini-1))),
+                        alignment=ft.Alignment(0.0, 0.0),
+                        width=tam,
+                        height=tam,
+                        bgcolor=ft.Colors.BLUE_GREY_500,
+                        border_radius=ft.BorderRadius(5,5,5,5),
+                        on_click=select_day,
+                        on_hover=on_hover,
+                    )
+                )
+        return itemsd #almacena el grupo de contenedores en un arreglo
+
+
+    dias_sem = ft.Row( # encabezado (dias de la semana) en fila
+        wrap=True,
+        width=(tam*7)+(sep*6),
+        height=(sep+5),
+        spacing=sep,
+        controls=head(semana)
+    )
+
+
+    hoja = ft.Row( # fila de contenedores (dias del mes)
+        wrap=True,
+        width=(tam*7)+(sep*6),
+        height=600,
+        spacing=sep,
+        controls=items(42,din,dfi)
+    )
+
+
+    drop_mes = ft.Dropdown( # lista deplegable meses
+        editable=True,
+        #label='Mes',
+        options=moth_options(),
+        text_align = ft.TextAlign.CENTER,
+        on_change=fec_change,
+    )
+
+
+    drop_anio = ft.Dropdown( # listadesplegable años
+        editable=True,
+        options=anio_options(),
+        text_align=ft.TextAlign.CENTER,
+        on_change=fec_change,
+    )
+
+
+    drop_depositos = ft.Dropdown( # lista desplegable depositos
+        editable=True,
+        label='Deposito:',
+        options=dep_options(),
+        text_align=ft.TextAlign.CENTER,
+        width=350,
+        on_change=dep_change,        
+    )
+
+
+    mes_lista = ft.Row ( # fila con listas de mes y año
+        width=(tam*7)+(sep*6),
+        height=100,
+        controls=[drop_mes, drop_anio], alignment=ft.MainAxisAlignment.CENTER
+    )
+
+    #Botones control de lista depositos
+    btn_updsel = ft.CupertinoFilledButton(
+        'Activar seleccion',
+        width=160, 
+        height=50,
+        opacity_on_click=0.3, 
+        border_radius=10, 
+        on_click=lambda _:opdeps(1)
+    )
+
+
+    btn_delsel = ft.CupertinoFilledButton(
+        'Descartar seleccion',
+        width=180,
+        height=50,
+        opacity_on_click=0.3, 
+        border_radius=10, 
+        on_click=lambda _:opdeps(2)
+    )
+
+
+
+
+
+
+
+
+
 
     def limpiarControles():
         # CONTROLES DEL FORMULARIO DE REGION
@@ -100,6 +467,7 @@ def main(page: ft.Page):
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
     # LIST VIEW PARA MOSTRAR LAS REGIONES
     lv = ft.ListView(expand=1, auto_scroll=True)
+    listadep = ft.ListView(spacing=5, auto_scroll=True, width=350)
     lista_regiones = ft.DataTable(
         columns=[
             ft.DataColumn(ft.Text('ID')),
@@ -114,8 +482,8 @@ def main(page: ft.Page):
             ft.DataColumn(ft.Text('MUNICIPIO')),
             ft.DataColumn(ft.Text('REGION'))
         ], rows=[]
-    )
-    
+    ) 
+
     lista_depositos = ft.DataTable(
         columns=[
             ft.DataColumn(ft.Text('ID')),
@@ -125,8 +493,7 @@ def main(page: ft.Page):
             ft.DataColumn(ft.Text('MUNICIPIO')),
             ft.DataColumn(ft.Text('TELEFONOS'))
         ], rows=[]
-    )
-    
+    )   
     # LIST VIEW PARA MOSTRAR LAS REGIONES
 
     # ELEMENTOS PARA LA PLANTILLA DEL FORMULARIO DE REGIONES
@@ -299,7 +666,7 @@ def main(page: ft.Page):
     def municipiosDropDownList():
         consultaSql = 'SELECT Id, UPPER(Municipio) FROM [CatMunicipio] ORDER BY Id'
         municipiosDb = run_query(consultaSql)
-        for row in municipiosDb:
+        for row in municipiosDb:            
             MunicipioId.options.append(
                 ft.DropdownOption(
                     key = (str(row[0])+'- '+ row[1]),
@@ -309,6 +676,16 @@ def main(page: ft.Page):
                 )
             )
         page.update()
+
+
+    def depositosRolesDropDownList():
+        consultaSql = 'SELECT Id, RazonSocial FROM CatDepositoVehicular WHERE Activo = 1'
+        depositosDb = run_query(consultaSql)   
+        return depositosDb     
+        # for row in depositosDb:
+        #     condep.append(str(row[0])+'-'+ row[1])
+        # print('condep:')
+        # print(condep)        
 
 
     def regionesAdd():
@@ -657,7 +1034,47 @@ def main(page: ft.Page):
     def show_RolesDepositos():
         page.controls.clear()
         texto = ft.Text('ROLES DE DEPOSITOS', size= 30)
+        
         page.add(texto)
+        page.add(
+            ft.Row(
+                controls=[
+                    ft.Column(
+                        controls=[
+                            ft.Container(
+                                width=(tam*7)+(sep*6),
+                                height=600,
+                                alignment= ft.Alignment(0.0, 0.0),
+                                content= ft.Column(
+                                    controls=[
+                                        mes_lista,
+                                        dias_sem,
+                                        hoja
+                                    ]
+                                )                                                                    
+                            )
+                        ], expand=True, horizontal_alignment= ft.CrossAxisAlignment.CENTER
+                    ),
+                    ft.Column(
+                        controls=[
+                            ft.Container(
+                                width= 500,
+                                height= 600,
+                                alignment= ft.Alignment(-1.0, 0.0),
+                                content= ft.Column(
+                                    controls=[
+                                        ft.Row(controls=[drop_depositos], alignment=ft.Alignment(-1.0, 0.0)),
+                                        ft.Row(controls=[listadep], alignment=ft.Alignment(-1.0, 0.0), height=400),
+                                        ft.Row(controls=[btn_updsel, btn_delsel], alignment=ft.Alignment(-1.0, 0.0))
+                                    ]
+                                )                                
+                            )
+                        ], horizontal_alignment= ft.Alignment(0.0, 0.0)
+                    )
+                ]
+            )
+        )        
+        arranque()        
         
 
     def show_SancionesDepositos():
@@ -676,7 +1093,7 @@ def main(page: ft.Page):
             ft.NavigationBarDestination(icon= ft.Icons.ACCESS_TIME_FILLED_ROUNDED, label= 'Roles de Depositos'),
             ft.NavigationBarDestination(icon= ft.Icons.INFO_SHARP, label= 'Sanciones Depositos')  # ACCOUNT_BOX, label= 'Sanciones Depositos')  # ADD_CARD_OUTLINED   # ADD_COMMENT
         ],
-        bgcolor= ft.colors.LIGHT_BLUE_800,
+        bgcolor= ft.Colors.LIGHT_BLUE_800,
         indicator_color= ft.Colors.GREEN_400,
         overlay_color= ft.Colors.AMBER_400
     )
