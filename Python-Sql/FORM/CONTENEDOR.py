@@ -34,7 +34,7 @@ def main(page: ft.Page):
     anchocol = 220
 
     # servidor = 'ECI-SDMYT-001'
-    servidor = 'DESKTOP-SMKHTJB'
+    servidor = 'DESKTOP-TO7CUU2'
     basedatos = 'DepositoVehicular_DB'
     
     stringConexion = f"DRIVER={{SQL Server}}; SERVER={servidor}; DATABASE={basedatos}; Trusted_Connection=yes"   #  CADENA DE CONEXION
@@ -137,18 +137,6 @@ def main(page: ft.Page):
                 colors.append(dep.color)
                 regdep.remove(dep)
         page.update()
-
-
-    def fec_change(e): # navegacion entre meses
-        global status_save
-        if len(regdep) > 0 and status_save == False:
-            question_alert(
-                'Info',
-                'Con esta accción se perderán los cambios ¿Desea continuar?',
-                limpiar_control,cancelar_sel
-            )
-        if len(regdep) == 0 or status_save == True:
-            limpiar_control(None)
 
     def find_dep(depop): # busca la opcion elegida (deposito)
         for dep in drop_depositos.options:
