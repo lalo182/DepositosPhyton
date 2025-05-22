@@ -594,7 +594,7 @@ def main(page: ft.Page):
         editable=True,
         options=moth_options(),
         text_align = ft.TextAlign.CENTER,
-        on_change=fec_change,
+        on_change=reg_change,
     )
 
 
@@ -602,7 +602,7 @@ def main(page: ft.Page):
         editable=True,
         options=anio_options(),
         text_align=ft.TextAlign.CENTER,
-        on_change=fec_change,
+        on_change=reg_change,
     )
 
 
