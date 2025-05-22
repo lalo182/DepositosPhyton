@@ -88,13 +88,17 @@ def main(page: ft.Page):
     rango=[] # almacena el rango seleccionado
     itemsd=[] # almacen de contenedores para dias de mes
     regdep = [] # almacena caracteristicas y roles de los depositos
-   
+    # condep=['1 - Deposito 1', '21 - Deposito 2', '136 - Deposito 3', '4 - Deposito 4'] # resultado consulta depositos    
+
+
     global status_save
     global region_sel
-
-    region_sel = None
+    seleccion = [] # dias asignados a deposito
+    region_sel = ''
     status_save = False
-   
+    # global opdep
+    # opdep = 0
+
     def arranque(): # establece valor para dropdowns de mes y año        
         global mes
         global anio
@@ -102,6 +106,7 @@ def main(page: ft.Page):
         drop_anio.value = str(anio)
         reg_options()
         page.update()
+
 
     def select_listdep(e):
         ref = ((((e.control.parent).parent).parent).parent).parent
@@ -117,6 +122,7 @@ def main(page: ft.Page):
             
         regdep.append(move_element)
         alerta('Registro Seleccionado', regdep[-1].nom)
+    
 
     def delete_item(e):
         ref = ((((e.control.parent).parent).parent).parent).parent
@@ -150,6 +156,7 @@ def main(page: ft.Page):
         if len(regdep) == 0 or status_save == True:
             limpiar_control(None)
 
+
     def find_dep(depop): # busca la opcion elegida (deposito)
         for dep in drop_depositos.options:
             if depop == dep.key:
@@ -173,13 +180,6 @@ def main(page: ft.Page):
     def reg_change(e): # acciones post seleccion de region
         global status_save
         global region_sel
-        try:
-            ls = (drop_region.value).index('-') 
-            idr = int(drop_region.value[:ls]) # extrae id de region
-            drop_depositos.options = dep_options(idr)
-        except:
-            limpiar_control(None)
-
         if len(regdep) > 0 and status_save == False:
             question_alert(
                 'Info',
@@ -189,9 +189,11 @@ def main(page: ft.Page):
         if len(regdep) == 0 or status_save == True:
             region_sel = drop_region.value
             limpiar_control(None)
+            ls = (drop_region.value).index('-') 
+            idr = int(drop_region.value[:ls]) # extrae id de region
+            drop_depositos.options = dep_options(idr)
             region_sel = drop_region.value
-            
-        page.update()
+            page.update()
 
 
     def dep_change(e): # acciones post seleccion de deposito
@@ -239,6 +241,7 @@ def main(page: ft.Page):
                         ]
                     )
                 ),
+                #on_click=select_listdep,
             )
             mosaicos.append(elemento)
         listadep.controls.extend(mosaicos)
@@ -276,11 +279,14 @@ def main(page: ft.Page):
 
     def dep_options(regionId): # deplegable de depositos
         deps = []
+        # condep = depositosRolesDropDownList()
         consultaSql = 'SELECT Id, RazonSocial FROM CatDepositoVehicular WHERE Activo = 1 AND RegionId = ?'
         depositosDb = run_query(consultaSql, (regionId,))
         for dep in depositosDb:
             deps.append(
                 ft.DropdownOption(
+                    # key=dep,
+                    # content=ft.Text(value=dep)
                     key = (str(dep[0])+'-'+dep[1]),
                     content= ft.Text(str(dep[0])+'-'+dep[1])
                 ),
@@ -295,6 +301,8 @@ def main(page: ft.Page):
         for reg in regionesDb:
             regs.append(
                 ft.DropdownOption(
+                    # key=reg,
+                    # content=ft.Text(value=reg)
                     key = (str(reg[0])+'- '+ reg[1]),
                     content= ft.Text(str(reg[1]))
                 ),
@@ -367,63 +375,63 @@ def main(page: ft.Page):
                         Dbo.CatRegion
                         ON Id=RegID WHERE id = ?'''
         listdep = run_query(info_roles, (anio, mes, region,))
-        if len(listdep) > 0:
-            for d in listdep:
-                color_act = colors[0]
-                
-                #eliminar deposito seleccionado de la lista
-                opdep = find_dep((str(d[0])+'-'+d[1]))
-                if opdep != None:
-                    drop_depositos.options.remove(opdep)
-                regdep.append(
-                    Deposito(color_act, d[0],'Null','Null', d[1])
-                )
-                
-                days = d[2].split(',')
-                for dia in itemsd: # recorrido al arreglo de contenedores
-                    if dia.bgcolor != ft.Colors.TRANSPARENT: # discrimina contenedores vacios
-                        pos = (dia.content.value)
-                        if pos in days: # marca rango seleccionado
-                            dia.bgcolor = color_act
-                        
-                colors.remove(color_act)
 
-            ###################################################################
-            #gestion de depositos almacenados
-            listadep.controls.clear()
-            mosaicos = []
-            for dep in regdep:
-                elemento = ft.ListTile(
-                    leading=ft.Text(value=str(dep.iddep), color=ft.Colors.TRANSPARENT),
-                    title=ft.Text(value=dep.nom),
-                    trailing=ft.Container(
-                        width=60,
-                        height=30,
-                        content=ft.Row(
-                            controls=[
-                                ft.Column(controls=[
-                                    ft.Container(
-                                        alignment=ft.Alignment(0.0, 0.0),
-                                        width=20,
-                                        height=20,
-                                        bgcolor=dep.color,
-                                        shape=ft.BoxShape.CIRCLE,
-                                    )],
-                                ),
-                                ft.Column(controls=[
-                                    ft.PopupMenuButton(
-                                        items=[
-                                            ft.PopupMenuItem(text='Seleccionar', on_click= select_listdep),
-                                            ft.PopupMenuItem(text='Descartar', on_click= delete_item)
-                                        ]
-                                    )]
-                                )
-                            ]
-                        )
-                    ),
-                )
-                mosaicos.append(elemento)
-            listadep.controls.extend(mosaicos)
+        for d in listdep:
+            color_act = colors[0]
+            
+            #eliminar deposito seleccionado de la lista
+            opdep = find_dep((str(d[0])+'-'+d[1]))
+            if opdep != None:
+                drop_depositos.options.remove(opdep)
+            regdep.append(
+                Deposito(color_act, d[0],'Null','Null', d[1])
+            )
+            
+            days = d[2].split(',')
+            for dia in itemsd: # recorrido al arreglo de contenedores
+                if dia.bgcolor != ft.Colors.TRANSPARENT: # discrimina contenedores vacios
+                    pos = (dia.content.value)
+                    if pos in days: # marca rango seleccionado
+                        dia.bgcolor = color_act
+                       
+            colors.remove(color_act)
+
+        ###################################################################
+        #gestion de depositos almacenados
+        listadep.controls.clear()
+        mosaicos = []
+        for dep in regdep:
+            elemento = ft.ListTile(
+                leading=ft.Text(value=str(dep.iddep), color=ft.Colors.TRANSPARENT),
+                title=ft.Text(value=dep.nom),
+                trailing=ft.Container(
+                    width=60,
+                    height=30,
+                    content=ft.Row(
+                        controls=[
+                            ft.Column(controls=[
+                                ft.Container(
+                                    alignment=ft.Alignment(0.0, 0.0),
+                                    width=20,
+                                    height=20,
+                                    bgcolor=dep.color,
+                                    shape=ft.BoxShape.CIRCLE,
+                                )],
+                            ),
+                            ft.Column(controls=[
+                                ft.PopupMenuButton(
+                                    items=[
+                                        ft.PopupMenuItem(text='Seleccionar', on_click= select_listdep),
+                                        ft.PopupMenuItem(text='Descartar', on_click= delete_item)
+                                    ]
+                                )]
+                            )
+                        ]
+                    )
+                ),
+            )
+            mosaicos.append(elemento)
+        listadep.controls.extend(mosaicos)
         
         page.update()
         
@@ -433,12 +441,6 @@ def main(page: ft.Page):
         global anio
         global mes
         cad_dia = ''
-        btn_guardar.disabled=True
-        drop_anio.disabled=True
-        drop_mes.disabled=True
-        drop_region.disabled=True
-        drop_depositos.disabled=True
-        page.update()
         for dep in regdep:
             for dia in itemsd:
                 if dia.bgcolor == dep.color:
@@ -447,35 +449,28 @@ def main(page: ft.Page):
                         cad_dia = valor
                     else:
                         cad_dia = cad_dia+','+valor
-            query_rol = 'SELECT [DepositoVehicularId] FROM [dbo].[DepositosRoles] WHERE [DepositoVehicularId]=? AND [Mes]=? AND [Anio]=? AND [Activo]=?'
-            rolqry = run_query(query_rol, (dep.iddep, mes, anio, 1,))
+            query_rol = 'SELECT [DepositoVehicularId] FROM [dbo].[DepositosRoles] WHERE [DepositoVehicularId]=? AND [Mes]=? AND [Anio]=?'
+            rolqry = run_query(query_rol, (dep.iddep, mes, anio,))
 
             if rolqry:
-                act_rol ='UPDATE [dbo].[DepositosRoles] set [Activo]=? WHERE [DepositoVehicularId]=? AND [Mes]=? AND [Anio]=?'
-                run_query(act_rol,(0, dep.iddep, mes, anio,))
-            
-            insert_rol = '''INSERT INTO [dbo].[DepositosRoles]
-                            ([DepositoVehicularId]
-                            ,[Anio]
-                            ,[Mes]
-                            ,[Dias]
-                            ,[CreadoPor]
-                            ,[FechaCreacion]
-                            ,[ActualizadoPor]
-                            ,[FechaActualizacion]
-                            ,[Activo])
-                        VALUES(?,?,?,?,1,getdate(),1,getdate(),1)'''
-            run_query(insert_rol,(dep.iddep, anio, mes, cad_dia))
+                act_rol ='UPDATE [dbo].[DepositosRoles] set [Dias]=? WHERE [DepositoVehicularId]=? AND [Mes]=? AND [Anio]=?'
+                run_query(act_rol,(cad_dia, dep.iddep, mes, anio,))
+            else:
+                insert_rol = '''INSERT INTO [dbo].[DepositosRoles]
+                                ([DepositoVehicularId]
+                                ,[Anio]
+                                ,[Mes]
+                                ,[Dias]
+                                ,[CreadoPor]
+                                ,[FechaCreacion]
+                                ,[ActualizadoPor]
+                                ,[FechaActualizacion]
+                                ,[Activo])
+                            VALUES(?,?,?,?,1,getdate(),1,getdate(),1)'''
+                run_query(insert_rol,(dep.iddep, anio, mes, cad_dia))
             cad_dia=''
         status_save=True
-        btn_guardar.disabled=False
-        drop_anio.disabled=False
-        drop_mes.disabled=False
-        drop_region.disabled=False
-        drop_depositos.disabled=False
-        page.update()
         alerta('AVISO', 'REGISTRO GUARDADO CORRECTAMENTE')
-
 
 
     def head(sem): # encabezado nombre dias
@@ -568,7 +563,13 @@ def main(page: ft.Page):
         
         #seccion depositos
         listadep.controls.clear()
-        for dep in regdep:       
+        for dep in regdep:
+            drop_depositos.options.append( 
+                ft.DropdownOption(
+                    key=str(dep.iddep)+'-'+dep.nom,
+                    content=ft.Text(value=str(dep.iddep)+'-'+dep.nom)
+                )
+            )
             colors.append(dep.color)
         regdep.clear()
         status_save = False
@@ -576,7 +577,7 @@ def main(page: ft.Page):
         if dlg!=None:
             page.close(dlg)
 
-        if region_sel != None:
+        if region_sel != '':
             ls = (drop_region.value).index('-') 
             idr = int(drop_region.value[:ls]) # extrae id de region
             consulta_rol(idr)
@@ -606,14 +607,15 @@ def main(page: ft.Page):
         editable=True,
         options=moth_options(),
         text_align = ft.TextAlign.CENTER,
-        on_change=reg_change,
+        on_change=fec_change,
     )
+
 
     drop_anio = ft.Dropdown( # listadesplegable años
         editable=True,
         options=anio_options(),
         text_align=ft.TextAlign.CENTER,
-        on_change=reg_change,
+        on_change=fec_change,
     )
 
 
@@ -678,7 +680,9 @@ def main(page: ft.Page):
         Activo.value = True
         
 
-    def botonesAgregar():        
+    def botonesAgregar():    
+        btnAgregarRegistro.disabled =  False
+        btnEditarRegistro.disabled = False
         btnAgregarRegistro.visible =  True
         btnEditarRegistro.visible = False
         btnCancelarAccionForm.visible = False
@@ -891,20 +895,26 @@ def main(page: ft.Page):
     def regionesAdd():
         nuevaRegion = regionNombre.value.upper()
         consultaSql = 'INSERT INTO CatRegion (NombreRegion, Activo) VALUES(?, 1)'
-        try:
+        btnAgregarRegistro.disabled = True
+        page.update()
+        try:            
             run_query(consultaSql, (nuevaRegion,))                       
             regionesLista()
             limpiarControles()
             botonesAgregar()
-            alerta('EXITOSO', 'SE AGREGO CORRECTAMENTE A ' + nuevaRegion) 
+            alerta('EXITOSO', 'SE AGREGO CORRECTAMENTE A ' + nuevaRegion)            
         except Exception as ex:
-            alerta('WARNING', 'OCURRIO UN ERROR')        
+            alerta('WARNING', 'OCURRIO UN ERROR')
+        # btnAgregarRegistro.visible = True
+        # page.update()    
 
 
     def regionesUpdate():
         regid = regionId.value
         nuevaRegion = regionNombre.value.upper()
         estatusRegion = regionActivo.value
+        btnEditarRegistro.disabled = True
+        page.update()
         consultaSql = 'UPDATE CatRegion SET [NombreRegion] = ? , Activo = ? WHERE Id = ? '        
         try:
             run_query(consultaSql,(nuevaRegion, estatusRegion,regid))            
@@ -912,8 +922,10 @@ def main(page: ft.Page):
             limpiarControles()
             botonesAgregar()
             alerta('EXITOSO', 'SE ACTUALIZO CORRECTAMENTE A ' + nuevaRegion)
+            btnEditarRegistro.disabled = False            
         except Exception as ex:
             alerta('WARNING', 'OCURRIO UN ERROR')
+        # page.update()
         
 
     def municipioAdd():
@@ -922,7 +934,9 @@ def main(page: ft.Page):
             consultaSql = 'INSERT INTO CatMunicipio (Municipio, RegionId) VALUES (? , ?)'
             try:
                 run_query(consultaSql, (municipio, int(regionId),))
+                btnAgregarRegistro.disabled = True
                 alerta('EXITOSO', 'REGISTRO GUARDADO EXITOSAMENTE')
+                btnAgregarRegistro.disabled = False
                 municipiosLista()
                 limpiarControles()            
             except Exception as ex:
@@ -1080,7 +1094,7 @@ def main(page: ft.Page):
                                 width=300,
                                 height=480,
                                 padding=20,
-                                alignment=ft.Alignment(0.0, 0.0),
+                                alignment=ft.alignment.center,
                                 content=ft.Column(controls=[
                                         ft.Row(controls=[regionId]),
                                         ft.Row(controls=[regionNombre]),
@@ -1097,7 +1111,7 @@ def main(page: ft.Page):
                                 ft.Container(                                    
                                     width=600,
                                     height=500,
-                                    alignment=ft.Alignment(0.0, 0.0),
+                                    alignment=ft.alignment.top_center,
                                     content=lv                                    
                                 )
                             ],
@@ -1147,7 +1161,7 @@ def main(page: ft.Page):
                         ft.Container(
                             width=800,
                             height=450,
-                            alignment=ft.Alignment(0.0, 0.0),
+                            alignment= ft.alignment.top_center,
                             content= lv
                         )
                     )
@@ -1246,7 +1260,7 @@ def main(page: ft.Page):
                 controls=[
                     ft.Container(
                         width=1100,
-                        alignment=ft.Alignment(0.0, 0.0),
+                        alignment=ft.alignment.top_center,
                         content = lv
                     )
                 ]                
