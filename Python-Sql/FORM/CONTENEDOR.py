@@ -1081,7 +1081,7 @@ def main(page: ft.Page):
                                 width=300,
                                 height=480,
                                 padding=20,
-                                alignment=ft.alignment.center,
+                                alignment=ft.Alignment(0.0,0.0),
                                 content=ft.Column(controls=[
                                         ft.Row(controls=[regionId]),
                                         ft.Row(controls=[regionNombre]),
