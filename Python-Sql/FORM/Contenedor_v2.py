@@ -674,6 +674,9 @@ def main(page: ft.Page):
         btnEditarRegistro.visible = False
         btnCancelarAccionForm.visible = False
         regionActivo.visible = False
+        Activo.visible = False       
+        btnAgregarRegistro.text = "AGREGAR"
+        btnEditarRegistro.text = "EDITAR" 
         page.update()
 
 
@@ -691,7 +694,7 @@ def main(page: ft.Page):
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
     # LIST VIEW PARA MOSTRAR LAS REGIONES
-    lv = ft.ListView(expand=1, auto_scroll=True)
+    lv = ft.ListView(spacing=5, auto_scroll=True, expand=1)
     listadep = ft.ListView(spacing=5, auto_scroll=True, width=400)
     lista_regiones = ft.DataTable(
         columns=[
@@ -950,7 +953,8 @@ def main(page: ft.Page):
         CreadoPorAdminIdAttr = 1
         ActualizadoPorAdminIdAttr = 1
         btnAgregarRegistro.disabled = True
-        page.update
+        btnAgregarRegistro.text = "GUARDANDO..."
+        page.update()
         consultaSql = '''INSERT INTO CatDepositoVehicular
                         (RazonSocial, RepresentanteLegal, CorreoElectronicoContacto, NombreCompletoContactos
                         ,Telefonos, DireccionDeposito, RegionId, Latitud, Longitud, Ubicacion
@@ -983,6 +987,9 @@ def main(page: ft.Page):
         UbicacionAttr = Ubicacion.value
         ActivoAttr = Activo.value
         IdAttr = Id.value
+        btnEditarRegistro.disabled = True
+        btnEditarRegistro.text = "ACTUALIZANDO..."
+        page.update()
         consultaSql = '''UPDATE CatDepositoVehicular
                              SET RazonSocial = ?
                                 ,RepresentanteLegal = ?
@@ -1034,10 +1041,15 @@ def main(page: ft.Page):
     Activo = ft.Switch(label='ACTIVO', label_position=ft.LabelPosition.LEFT, visible= False)  
 
 
+    #textosControles
+    textoGuardar = ft.Text(value='GUARDAR', size=12)
+    textoEditar = ft.Text(value='EDITAR', size=12)
+    textoCancelar = ft.Text(value='CANCELAR', size=12)
+
     # BOTONES
-    btnEditarRegistro = ft.CupertinoFilledButton('EDITAR', width=120, opacity_on_click=0.3, border_radius=10, visible = False) # , on_click=lambda _:regionesUpdate()
-    btnAgregarRegistro = ft.CupertinoFilledButton('AGREGAR', width=120, opacity_on_click=0.3, border_radius=10, visible = True) # , on_click=lambda _:regionesAdd()
-    btnCancelarAccionForm = ft.CupertinoFilledButton('CANCELAR', width=120, opacity_on_click=0.3, border_radius=10, visible = False) # , on_click=lambda _:regionesAdd()
+    btnAgregarRegistro = ft.CupertinoFilledButton(content=textoGuardar, width=180, height=45, opacity_on_click=0.3, border_radius=10, visible = True) # , on_click=lambda _:regionesAdd()
+    btnEditarRegistro = ft.CupertinoFilledButton(content=textoEditar, width=180, height=45, opacity_on_click=0.3, border_radius=10, visible = False) # , on_click=lambda _:regionesUpdate()    
+    btnCancelarAccionForm = ft.CupertinoFilledButton(content=textoCancelar, width=180, height=45, opacity_on_click=0.3, border_radius=10, visible = False) # , on_click=lambda _:regionesAdd()
 
 
     def on_navigation_change(e):
@@ -1069,7 +1081,7 @@ def main(page: ft.Page):
                     ft.Column(
                         controls=[
                             ft.Container(
-                                width=550,
+                                width=450,
                                 height=480,
                                 padding=20,
                                 alignment=ft.Alignment(0.0, 0.0),
@@ -1086,7 +1098,7 @@ def main(page: ft.Page):
                         controls=[
                             ft.Row(controls=[
                                 ft.Container(                                    
-                                    width=300,
+                                    width=650,
                                     height=500,
                                     alignment=ft.Alignment(0.0, 0.0),
                                     content=lv                                    
