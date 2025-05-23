@@ -338,7 +338,7 @@ def main(page: ft.Page):
             if dia.bgcolor == color:
                 dia.bgcolor = ft.Colors.BLUE_GREY_500
                 dia.on_click = clickeable
-        page.update
+        page.update()
 
 
     def consulta_rol(region):
@@ -950,7 +950,7 @@ def main(page: ft.Page):
         CreadoPorAdminIdAttr = 1
         ActualizadoPorAdminIdAttr = 1
         btnAgregarRegistro.disabled = True
-        page.update
+        page.update()
         consultaSql = '''INSERT INTO CatDepositoVehicular
                         (RazonSocial, RepresentanteLegal, CorreoElectronicoContacto, NombreCompletoContactos
                         ,Telefonos, DireccionDeposito, RegionId, Latitud, Longitud, Ubicacion
