@@ -34,8 +34,8 @@ def main(page: ft.Page):
     anchocol = 220
 
     # servidor = 'ECI-SDMYT-001'
-    # servidor = 'DESKTOP-TO7CUU2' # SERVIDIOR DE PABLO
-    servidor = 'DESKTOP-SMKHTJB'  # SERVIDOR DE LALO
+    servidor = 'DESKTOP-TO7CUU2' # SERVIDIOR DE PABLO
+    #servidor = 'DESKTOP-SMKHTJB'  # SERVIDOR DE LALO
     basedatos = 'DepositoVehicular_DB'
     
     stringConexion = f"DRIVER={{SQL Server}}; SERVER={servidor}; DATABASE={basedatos}; Trusted_Connection=yes"   #  CADENA DE CONEXION
@@ -344,17 +344,10 @@ def main(page: ft.Page):
         global mes
         global anio
         
-        info_roles = '''SELECT Dep, Nombre, Listadia 
-                        FROM
-                        (SELECT Id as Dep, RazonSocial as Nombre, RegionId as Regid, T1.Listadia
-                        FROM Dbo.CatDepositoVehicular 
-                        INNER JOIN (SELECT Dias AS Listadia, DepositoVehicularId as Iddep FROM Dbo.DepositosRoles WHERE Anio = ? AND Mes = ?) AS T1
-                        ON Id=iddep WHERE Activo=1) as t2
-                        INNER JOIN
-                        Dbo.CatRegion
-                        ON Id=RegID WHERE id = ?'''
-        listdep = run_query(info_roles, (anio, mes, region,))
-        if len(listdep) > 0:
+        query_rol = 'SELECT * FROM [dbo].[Reg_Roles] WHERE ANIO=? AND MES=? AND regid=? AND act=1'
+        listdep = run_query(query_rol, (anio, mes, region,))
+
+        if listdep != None:
             for d in listdep:
                 color_act = colors[0]
                 
@@ -419,6 +412,10 @@ def main(page: ft.Page):
         global status_save
         global anio
         global mes
+        global region_sel
+        ls = (drop_region.value).index('-') 
+        idr = int(drop_region.value[:ls])
+
         cad_dia = ''
         btn_guardar.disabled=True
         drop_anio.disabled=True
@@ -426,6 +423,14 @@ def main(page: ft.Page):
         drop_region.disabled=True
         drop_depositos.disabled=True
         page.update()
+        query_rol = 'SELECT * FROM [DepositoVehicular_DB].[dbo].[Reg_Roles] WHERE ANIO=? AND MES=? AND regid=? AND act=1'
+        rolqry = run_query(query_rol, (anio, mes, idr,))
+
+        if rolqry != None:
+            for d in rolqry:
+                act_rol ='UPDATE [dbo].[DepositosRoles] set [Activo]=0 WHERE [DepositoVehicularId]=?'
+                run_query(act_rol,(d[0],))
+            
         for dep in regdep:
             for dia in itemsd:
                 if dia.bgcolor == dep.color:
@@ -434,12 +439,6 @@ def main(page: ft.Page):
                         cad_dia = valor
                     else:
                         cad_dia = cad_dia+','+valor
-            query_rol = 'SELECT [DepositoVehicularId] FROM [dbo].[DepositosRoles] WHERE [DepositoVehicularId]=? AND [Mes]=? AND [Anio]=? AND [Activo]=?'
-            rolqry = run_query(query_rol, (dep.iddep, mes, anio, 1,))
-
-            if rolqry:
-                act_rol ='UPDATE [dbo].[DepositosRoles] set [Activo]=? WHERE [DepositoVehicularId]=? AND [Mes]=? AND [Anio]=?'
-                run_query(act_rol,(0, dep.iddep, mes, anio,))
             
             insert_rol = '''INSERT INTO [dbo].[DepositosRoles]
                             ([DepositoVehicularId]
@@ -454,6 +453,7 @@ def main(page: ft.Page):
                         VALUES(?,?,?,?,1,getdate(),1,getdate(),1)'''
             run_query(insert_rol,(dep.iddep, anio, mes, cad_dia))
             cad_dia=''
+            
         status_save=True
         btn_guardar.disabled=False
         drop_anio.disabled=False
