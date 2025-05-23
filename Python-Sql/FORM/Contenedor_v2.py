@@ -34,7 +34,8 @@ def main(page: ft.Page):
     anchocol = 220
 
     # servidor = 'ECI-SDMYT-001'
-    servidor = 'DESKTOP-TO7CUU2'
+    # servidor = 'DESKTOP-TO7CUU2' # SERVIDIOR DE PABLO
+    servidor = 'DESKTOP-SMKHTJB'  # SERVIDOR DE LALO
     basedatos = 'DepositoVehicular_DB'
     
     stringConexion = f"DRIVER={{SQL Server}}; SERVER={servidor}; DATABASE={basedatos}; Trusted_Connection=yes"   #  CADENA DE CONEXION
@@ -661,10 +662,13 @@ def main(page: ft.Page):
         Telefonos.value = ''
         Latitud.value = ''
         Longitud.value = ''
+        Ubicacion.value = ''
         Activo.value = True
         
 
     def botonesAgregar():        
+        btnAgregarRegistro.disabled =  False
+        btnEditarRegistro.disabled = False
         btnAgregarRegistro.visible =  True
         btnEditarRegistro.visible = False
         btnCancelarAccionForm.visible = False
@@ -779,24 +783,25 @@ def main(page: ft.Page):
     def selectedrowDepositos(e):
         IdSeleccionado = int(e.control.cells[0].content.value)
         consultaSql = '''SELECT cdv.Id
-                               ,RazonSocial
-                               ,RepresentanteLegal
-                               ,CorreoElectronicoContacto
-                               ,NombreCompletoContactos
-                               ,Telefonos
-                               ,DireccionDeposito
-                               ,cdv.MunicipioId
-                               ,UPPER(cm.Municipio)
-                               ,Latitud
-                               ,Longitud
-                               ,cdv.Activo
-                               ,CreadoPorAdminId
-                               ,FechaCreacion
-                               ,ActualizadoPorAdminId
-                               ,FechaActualizacion
-                           FROM CatDepositoVehicular cdv 
-                     INNER JOIN CatMunicipio cm ON cdv.MunicipioId = cm.Id
-                          WHERE cdv.Id = ? '''
+                                ,RazonSocial
+                                ,RepresentanteLegal
+                                ,CorreoElectronicoContacto
+                                ,NombreCompletoContactos
+                                ,Telefonos
+                                ,DireccionDeposito
+                                ,cr.Id
+                                ,UPPER(cr.NombreRegion)
+                                ,Latitud
+                                ,Longitud
+                                ,Ubicacion
+                                ,cdv.Activo
+                                ,CreadoPorAdminId
+                                ,FechaCreacion
+                                ,ActualizadoPorAdminId
+                                ,FechaActualizacion
+                            FROM CatDepositoVehicular cdv 
+                      INNER JOIN CatRegion cr ON cdv.RegionId = cr.Id
+                            WHERE cdv.Id = ?'''
         depositoDB = run_query(consultaSql, (IdSeleccionado,))
         Id.value = str(depositoDB[0][0])
         RazonSocial.value = str(depositoDB[0][1])
@@ -808,7 +813,8 @@ def main(page: ft.Page):
         municipioSelectRegion.value = str(depositoDB[0][7])+ '- ' + str(depositoDB[0][8])
         Latitud.value = str(depositoDB[0][9])
         Longitud.value = str(depositoDB[0][10])
-        Activo.value = bool(depositoDB[0][11])
+        Ubicacion.value = str(depositoDB[0][11])
+        Activo.value = bool(depositoDB[0][12])
         botonesEditar()
         page.update()
 
@@ -856,6 +862,7 @@ def main(page: ft.Page):
             alerta('AVISO', 'OCURRIO UN ERROR AL SELECCIONAR EL ELEMENTO')
         page.update()
 
+
     def regionesDropDownList():
         consultaSql = 'SELECT Id, NombreRegion  FROM CatRegion WHERE Activo = 1 ORDER BY NombreRegion'
         regionesLst = run_query(consultaSql)        
@@ -869,6 +876,7 @@ def main(page: ft.Page):
                 )                
             )
         page.update()
+
 
     def regionesAdd():
         nuevaRegion = regionNombre.value.upper()
@@ -926,7 +934,7 @@ def main(page: ft.Page):
             print('ERROR AL ACRTUALIZAR')
 
 
-    def depositoAdd():
+    def depositoAdd():        
         RazonSocialAttr = RazonSocial.value
         RepresentanteLegalAttr = RepresentanteLegal.value
         CorreoElectronicoContactoAttr = CorreoElectronicoContacto.value
@@ -937,16 +945,19 @@ def main(page: ft.Page):
         RegionIdAttr = regionSeleccionada()
         LatitudAttr = Latitud.value
         LongitudAttr = Longitud.value
+        UbicacionAttr = Ubicacion.value
         CreadoPorAdminIdAttr = 1
         ActualizadoPorAdminIdAttr = 1
+        btnAgregarRegistro.disabled = True
+        page.update
         consultaSql = '''INSERT INTO CatDepositoVehicular
                         (RazonSocial, RepresentanteLegal, CorreoElectronicoContacto, NombreCompletoContactos
-                        ,Telefonos, DireccionDeposito, RegionId, Latitud, Longitud
+                        ,Telefonos, DireccionDeposito, RegionId, Latitud, Longitud, Ubicacion
                         ,CreadoPorAdminId, FechaCreacion, ActualizadoPorAdminId, FechaActualizacion, Activo)
-                    VALUES(?,?,?,?,?,?,?,?,?,?,GETDATE(),?,GETDATE(),1)'''
+                    VALUES(?,?,?,?,?,?,?,?,?,?,?,GETDATE(),?,GETDATE(),1)'''
         try:
             run_query(consultaSql, (RazonSocialAttr, RepresentanteLegalAttr, CorreoElectronicoContactoAttr, NombreCompletoContactosAttr
-                                   ,TelefonosAttr, DireccionDepositoAttr, int(RegionIdAttr), LatitudAttr, LongitudAttr
+                                   ,TelefonosAttr, DireccionDepositoAttr, int(RegionIdAttr), LatitudAttr, LongitudAttr, UbicacionAttr
                                    ,int(CreadoPorAdminIdAttr), int(ActualizadoPorAdminIdAttr),))
             alerta('EXITOSO', 'REGISTRO GUARDADO EXITOSAMENTE: ' + RazonSocialAttr)
             depositosLista()
@@ -968,6 +979,7 @@ def main(page: ft.Page):
         RegionIdAttr = regionSeleccionada()
         LatitudAttr = Latitud.value
         LongitudAttr = Longitud.value
+        UbicacionAttr = Ubicacion.value
         ActivoAttr = Activo.value
         IdAttr = Id.value
         consultaSql = '''UPDATE CatDepositoVehicular
@@ -977,16 +989,17 @@ def main(page: ft.Page):
                                 ,NombreCompletoContactos = ?
                                 ,Telefonos = ?
                                 ,DireccionDeposito = ?
-                                ,MunicipioId = ?
+                                ,RegionId = ?
                                 ,Latitud = ?
                                 ,Longitud = ?
+                                ,Ubicacion = ?
                                 ,ActualizadoPorAdminId = 1
                                 ,FechaActualizacion = GETDATE()
                                 ,Activo = ?
                             WHERE Id = ?'''
         try:
             run_query(consultaSql, (RazonSocialAttr, RepresentanteLegalAttr, CorreoElectronicoContactoAttr, NombreCompletoContactosAttr
-                                   ,TelefonosAttr, DireccionDepositoAttr, RegionIdAttr, LatitudAttr, LongitudAttr, ActivoAttr, IdAttr))
+                                   ,TelefonosAttr, DireccionDepositoAttr, RegionIdAttr, LatitudAttr, LongitudAttr, UbicacionAttr, ActivoAttr, IdAttr))
             alerta('EXITOSO', 'REGISTRO ACTUALIZADO EXITOSAMENTE: ' + RazonSocialAttr)
             depositosLista()
         except:
@@ -997,33 +1010,33 @@ def main(page: ft.Page):
 
 
     # CONTROLES PARA EL FORMULARIO DE REGIONES
-    regionId = ft.TextField(label='Id', width=anchocol, read_only=True)
-    regionNombre = ft.TextField(label='Region', width=anchocol)
+    regionId = ft.TextField(label='Id', width=280, read_only=True, height= 35, text_size=12)
+    regionNombre = ft.TextField(label='Region', width=280, height= 35, text_size=12)
     regionActivo = ft.Checkbox(label='Disponible', visible= False)    
     # CONTROLES PARA EL FORMULARIO DE MUNICIPIOS
-    municipioIdProp = ft.TextField(label='Id', width= 80, read_only= True)
-    municipioNombreProp = ft.TextField(label='MUNICIPIO', width= 720)
-    municipioSelectRegion = Dropdown(label= 'REGIÓN', width=350, enable_filter= True, editable= True, on_change=lambda _:regionSeleccionada())
+    municipioIdProp = ft.TextField(label='Id', width= 80, height= 35, text_size=12, read_only= True)
+    municipioNombreProp = ft.TextField(label='MUNICIPIO', width= 720, height= 35, text_size=12)
+    municipioSelectRegion = Dropdown(label= 'REGIÓN', width=350,  menu_height=105, enable_filter= True, editable= True, on_change=lambda _:regionSeleccionada())
     # CONTROLES PARA EL FORMULARIO DE DEPOSITOS
-    Id = ft.TextField(label='Id', width= 70, read_only= True)
-    RazonSocial = ft.TextField(label='RAZON SOCIAL', width= 565)
-    RepresentanteLegal = ft.TextField(label='REPRESENTANTE LEGAL', width= 565)
+    Id = ft.TextField(label='Id', width= 70, height= 35, text_size=12, read_only= True)
+    RazonSocial = ft.TextField(label='RAZON SOCIAL', width= 565, height= 35, text_size=12)
+    RepresentanteLegal = ft.TextField(label='REPRESENTANTE LEGAL', width= 565, height= 35, text_size=12)
     # MunicipioId = Dropdown(label= 'MUNICIPIO', width=500, enable_filter= True, editable= True) #, on_change=lambda _:regionSeleccionada())
-    municipioSelectRegion = Dropdown(label= 'REGIÓN', width=500, enable_filter= True, editable= True)
-    DireccionDeposito = ft.TextField(label='DIRECCIÓN', width= 700)
-    NombreCompletoContactos = ft.TextField(label='NOMBRE DE CONTACTO', width= 450)
-    CorreoElectronicoContacto = ft.TextField(label='CORREO ELECTRONICO', width= 400)
-    Telefonos = ft.TextField(label='TELEFONO(S)', width= 300)    
-    Latitud = ft.TextField(label='LATITUD', width=450)
-    Longitud = ft.TextField(label='LONGITUD', width=450)    
-    Activo = ft.Switch(label='ACTIVO', label_position=ft.LabelPosition.LEFT, visible= False) 
+    # SE ACTUALIZO PARA SELECCIONAR LA REGION, OCUPARE EL CONTROL <municipioSelectRegion>
+    DireccionDeposito = ft.TextField(label='DIRECCIÓN', width= 700, height= 35, text_size=12)
+    NombreCompletoContactos = ft.TextField(label='NOMBRE DE CONTACTO', width= 450, height= 35, text_size=12)
+    CorreoElectronicoContacto = ft.TextField(label='CORREO ELECTRONICO', width= 400, height= 35, text_size=12)
+    Telefonos = ft.TextField(label='TELEFONO(S)', width= 300, height= 35, text_size=12)
+    Ubicacion = ft.TextField(label='UBICACION (MAPS)', width=450, height= 35, text_size=12)    
+    Latitud = ft.TextField(label='LATITUD', width=450, height= 35, text_size=12)
+    Longitud = ft.TextField(label='LONGITUD', width=450, height= 35, text_size=12)    
+    Activo = ft.Switch(label='ACTIVO', label_position=ft.LabelPosition.LEFT, visible= False)  
 
 
     # BOTONES
-    btnEditarRegistro = ft.CupertinoFilledButton('EDITAR', width=120, opacity_on_click=0.3, border_radius=10, visible = False) # , on_click=lambda _:regionesUpdate()
-    btnAgregarRegistro = ft.CupertinoFilledButton('AGREGAR', width=120, opacity_on_click=0.3, border_radius=10, visible = True) # , on_click=lambda _:regionesAdd()
-    btnCancelarAccionForm = ft.CupertinoFilledButton('CANCELAR', width=120, opacity_on_click=0.3, border_radius=10, visible = False) # , on_click=lambda _:regionesAdd()
-
+    btnEditarRegistro = ft.CupertinoFilledButton('EDITAR', width=120, height=30, opacity_on_click=0.3, border_radius=10, visible = False) # , on_click=lambda _:regionesUpdate()
+    btnAgregarRegistro = ft.CupertinoFilledButton('AGREGAR', width=120, height=30, opacity_on_click=0.3, border_radius=10, visible = True) # , on_click=lambda _:regionesAdd()
+    btnCancelarAccionForm = ft.CupertinoFilledButton('CANCELAR', width=120, height=30, opacity_on_click=0.3, border_radius=10, visible = False) # , on_click=lambda _:regionesAdd()
 
 
     def on_navigation_change(e):
@@ -1055,7 +1068,7 @@ def main(page: ft.Page):
                     ft.Column(
                         controls=[
                             ft.Container(
-                                width=300,
+                                width=550,
                                 height=480,
                                 padding=20,
                                 alignment=ft.Alignment(0.0, 0.0),
@@ -1063,7 +1076,6 @@ def main(page: ft.Page):
                                         ft.Row(controls=[regionId]),
                                         ft.Row(controls=[regionNombre]),
                                         ft.Row(controls=[regionActivo]),
-                                        # ft.Divider(height=10, color=ft.colors.TRANSPARENT),
                                         ft.Row(controls = [btnAgregarRegistro, btnEditarRegistro, btnCancelarAccionForm])
                                 ])
                             )
@@ -1073,7 +1085,7 @@ def main(page: ft.Page):
                         controls=[
                             ft.Row(controls=[
                                 ft.Container(                                    
-                                    width=600,
+                                    width=300,
                                     height=500,
                                     alignment=ft.Alignment(0.0, 0.0),
                                     content=lv                                    
@@ -1090,13 +1102,13 @@ def main(page: ft.Page):
 
     def show_CatMunicipios():
         page.controls.clear()
-        texto = ft.Text('CATÁLOGO DE MUNICIPIOS', size= 30)        
+        texto = ft.Text('CATÁLOGO DE MUNICIPIOS', size= 30)
+        municipioSelectRegion.options = []
         btnAgregarRegistro.on_click = lambda _:municipioAdd()
         btnEditarRegistro.on_click = lambda _:municipioUpdate()
         btnCancelarAccionForm.on_click = lambda _:botonesCancelarAccionForm()
         regionesDropDownList()
         municipiosLista()
-
         page.add(texto)
         page.add(
             ft.Row(
@@ -1136,6 +1148,7 @@ def main(page: ft.Page):
     def show_Depositos():
         page.controls.clear()
         texto = ft.Text('CATÁLOGO DE DEPOSITOS', size= 30)
+        municipioSelectRegion.options = []
         btnAgregarRegistro.on_click = lambda _:depositoAdd()
         btnEditarRegistro.on_click = lambda _:depositoUpdate()
         btnCancelarAccionForm.on_click = lambda _:botonesCancelarAccionForm()
@@ -1178,6 +1191,22 @@ def main(page: ft.Page):
                         controls=[Telefonos]
                     )
                 ]                                
+            ),
+            ft.Row(
+                vertical_alignment= ft.CrossAxisAlignment.CENTER,
+                controls=[
+                    ft.Column(                        
+                        controls=[Ubicacion]
+                    )
+                ]
+            ),
+            ft.Row(
+                vertical_alignment= ft.CrossAxisAlignment.CENTER,
+                controls=[
+                    ft.Column(                        
+                        controls=[ft.Text('COORDENADAS', size= 15, weight= 20)]
+                    )
+                ]
             ),
             ft.Row(
                 controls= [
@@ -1285,6 +1314,6 @@ def main(page: ft.Page):
     )
 
     page.navigation_bar = barradeNavegacion
-    show_CatRegiones()    
+    show_CatRegiones()
 
 ft.app(target= main)
