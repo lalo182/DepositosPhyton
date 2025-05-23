@@ -340,6 +340,7 @@ def main(page: ft.Page):
                 dia.on_click = clickeable
         page.update
 
+
     def consulta_rol(region):
         global mes
         global anio
@@ -462,7 +463,6 @@ def main(page: ft.Page):
         drop_depositos.disabled=False
         page.update()
         alerta('AVISO', 'REGISTRO GUARDADO CORRECTAMENTE')
-
 
 
     def head(sem): # encabezado nombre dias
@@ -596,6 +596,7 @@ def main(page: ft.Page):
         on_change=reg_change,
     )
 
+
     drop_anio = ft.Dropdown( # listadesplegable años
         editable=True,
         options=anio_options(),
@@ -617,7 +618,7 @@ def main(page: ft.Page):
     drop_region = ft.Dropdown( # lista desplegable regiones
         editable=True,
         label='Region:',
-        options=reg_options(),
+        # options=reg_options(),
         text_align=ft.TextAlign.CENTER,
         width=350,
         on_change=reg_change,
@@ -1016,7 +1017,7 @@ def main(page: ft.Page):
     # CONTROLES PARA EL FORMULARIO DE MUNICIPIOS
     municipioIdProp = ft.TextField(label='Id', width= 80, height= 35, text_size=12, read_only= True)
     municipioNombreProp = ft.TextField(label='MUNICIPIO', width= 720, height= 35, text_size=12)
-    municipioSelectRegion = Dropdown(label= 'REGIÓN', width=350,  menu_height=105, enable_filter= True, editable= True, on_change=lambda _:regionSeleccionada())
+    municipioSelectRegion = Dropdown(label= 'REGIÓN', width=350, enable_filter= True, editable= True, on_change=lambda _:regionSeleccionada())
     # CONTROLES PARA EL FORMULARIO DE DEPOSITOS
     Id = ft.TextField(label='Id', width= 70, height= 35, text_size=12, read_only= True)
     RazonSocial = ft.TextField(label='RAZON SOCIAL', width= 565, height= 35, text_size=12)
@@ -1034,9 +1035,9 @@ def main(page: ft.Page):
 
 
     # BOTONES
-    btnEditarRegistro = ft.CupertinoFilledButton('EDITAR', width=120, height=30, opacity_on_click=0.3, border_radius=10, visible = False) # , on_click=lambda _:regionesUpdate()
-    btnAgregarRegistro = ft.CupertinoFilledButton('AGREGAR', width=120, height=30, opacity_on_click=0.3, border_radius=10, visible = True) # , on_click=lambda _:regionesAdd()
-    btnCancelarAccionForm = ft.CupertinoFilledButton('CANCELAR', width=120, height=30, opacity_on_click=0.3, border_radius=10, visible = False) # , on_click=lambda _:regionesAdd()
+    btnEditarRegistro = ft.CupertinoFilledButton('EDITAR', width=120, opacity_on_click=0.3, border_radius=10, visible = False) # , on_click=lambda _:regionesUpdate()
+    btnAgregarRegistro = ft.CupertinoFilledButton('AGREGAR', width=120, opacity_on_click=0.3, border_radius=10, visible = True) # , on_click=lambda _:regionesAdd()
+    btnCancelarAccionForm = ft.CupertinoFilledButton('CANCELAR', width=120, opacity_on_click=0.3, border_radius=10, visible = False) # , on_click=lambda _:regionesAdd()
 
 
     def on_navigation_change(e):
@@ -1248,7 +1249,9 @@ def main(page: ft.Page):
 
     def show_RolesDepositos():
         page.controls.clear()
-        texto = ft.Text('ROLES DE DEPOSITOS', size= 30)        
+        texto = ft.Text('ROLES DE DEPOSITOS', size= 30)
+        drop_region.options = []
+        drop_region.options = reg_options()
         page.add(texto)
         page.add(
             ft.Row(
