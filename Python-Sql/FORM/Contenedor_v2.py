@@ -62,7 +62,7 @@ def main(page: ft.Page):
         page.open(dlg)
 
     
-    tam =70 #tamaño contenedores dias calendario
+    tam =60 #tamaño contenedores dias calendario
     sep = 10 #separacion entre cuadros
     semana = ['Dom','Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab']
     meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
@@ -1249,10 +1249,9 @@ def main(page: ft.Page):
 
     def show_RolesDepositos():
         page.controls.clear()
-        texto = ft.Text('ROLES DE DEPOSITOS', size= 30)
+        page.auto_scroll = True
         drop_region.options = []
         drop_region.options = reg_options()
-        page.add(texto)
         page.add(
             ft.Row(
                 controls=[
