@@ -1,7 +1,7 @@
-USE [DepositoVehicular_DB]
+USE DepositoVehicular_DB
 GO
 
-CREATE VIEW Reg_Roles AS
+CREATE VIEW [dbo].[Reg_Roles] AS
 
 SELECT Dep, Nombre, Listadia, act, anio, mes, regid
 FROM

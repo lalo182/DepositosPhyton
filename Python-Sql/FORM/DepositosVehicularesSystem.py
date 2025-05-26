@@ -55,8 +55,8 @@ def main(page: ft.Page):
                 except:
                     conn.commit()
                     return 0            
-        except Exception as ex:
-            print(ex)
+        except pyodbc.Error as ex:
+            alerta("AVISO", f"Error al conectarse a la base de datos.\nRevise su conexión o repórtelo a soporte técnico")
 
 
     def alerta(titulo, mensaje):
