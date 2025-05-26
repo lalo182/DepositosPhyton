@@ -638,7 +638,7 @@ def main(page: ft.Page):
         height=50,
         opacity_on_click=0.3, 
         border_radius=10, 
-        on_click=lambda _:guardar_rol()
+        on_click=lambda _:guardar_rol(),
     )
 
 
