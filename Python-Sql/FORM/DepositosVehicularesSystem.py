@@ -34,7 +34,7 @@ def main(page: ft.Page):
     anchocol = 220
 
     servidor = '10.27.1.14'
-    # servidor = 'DESKTOP-TO7CUU2' # SERVIDIOR DE PABLO
+    #servidor = 'DESKTOP-TO7CUU2' # SERVIDIOR DE PABLO
     # servidor = 'DESKTOP-SMKHTJB'  # SERVIDOR DE LALO
     basedatos = 'DepositoVehicular_DB'
     usuario = 'sa'
