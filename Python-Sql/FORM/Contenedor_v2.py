@@ -33,14 +33,15 @@ def main(page: ft.Page):
     # page.window.min_height=largo_win
     anchocol = 220
 
-    servidor = '10.27.1.14'
-    # servidor = 'DESKTOP-TO7CUU2' # SERVIDIOR DE PABLO
+    #servidor = '10.27.1.14'
+    servidor = 'DESKTOP-TO7CUU2' # SERVIDIOR DE PABLO
     # servidor = 'DESKTOP-SMKHTJB'  # SERVIDOR DE LALO
     basedatos = 'DepositoVehicular_DB'
     usuario = 'sa'
     claveacceso = 'Gruas$mT*$!'
     
-    stringConexion = f"DRIVER={{SQL Server}}; SERVER={servidor}; DATABASE={basedatos}; UID={usuario};PWD={claveacceso}"   #  CADENA DE CONEXION
+    #stringConexion = f"DRIVER={{SQL Server}}; SERVER={servidor}; DATABASE={basedatos}; UID={usuario};PWD={claveacceso}"   #  CADENA DE CONEXION
+    stringConexion = f"DRIVER={{SQL Server}}; SERVER={servidor}; DATABASE={basedatos}; Trusted_Connection=yes"  
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #     
     def run_query(consulta, parameters = ()):
@@ -1169,22 +1170,26 @@ def main(page: ft.Page):
         btnCancelarAccionForm.on_click = lambda _:botonesCancelarAccionForm()
         page.add(texto)
         page.add(
-            ft.Row(
-                vertical_alignment= ft.CrossAxisAlignment.CENTER,
-                controls= [
-                    ft.Column(
-                        controls=[Id]
-                    ),
-                    ft.Column(
-                        controls=[RazonSocial]
-                    ),
-                    ft.Column(
-                        controls=[RepresentanteLegal]
-                    )
-                ]
+            ft.Column(
+                #vertical_alignment= ft.CrossAxisAlignment.CENTER,
+                controls=[ft.Row(
+                            controls= [
+                                ft.Column(
+                                    controls=[Id]
+                                ),
+                                ft.Column(
+                                    controls=[RazonSocial]
+                                ),
+                                ft.Column(
+                                    controls=[RepresentanteLegal]
+                                )
+                            ],
+                            wrap=True,
+                    )]
             ),
             ft.Row(
                 vertical_alignment= ft.CrossAxisAlignment.CENTER,
+                wrap=True,
                 controls=[
                     ft.Column(
                         controls=[municipioSelectRegion]
