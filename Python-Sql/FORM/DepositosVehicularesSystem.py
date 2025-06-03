@@ -1,6 +1,8 @@
 import flet as ft
 import pyodbc
 import calendar
+import datetime as dt
+import sqlite3
 
 from flet import *
 from datetime import datetime
@@ -14,14 +16,31 @@ class Deposito(): # Diseñado para almacenar informacion para los depositos
             self.nom = nombre
 
 
+class VehiculoIncidente():
+    def __init__(self, incidenteId, noVehiculo, noPlacas, noSerie, marcaId, marca, linea, modelo, 
+                 nombreConductor, apellidosConductor, origenPlacasId, observaciones):
+        self.incidenteId = incidenteId
+        self.noVehiculo = noVehiculo
+        self.noPlacas = noPlacas
+        self.noSerie = noSerie
+        self.marcaId = marcaId
+        self.marca = marca
+        self.linea = linea
+        self.modelo = modelo
+        self.nombreConductor = nombreConductor
+        self.apellidosConductor = apellidosConductor
+        self.origenPLacasId = origenPlacasId
+        self.observaciones = observaciones
+
+
 def main(page: ft.Page):
     page.theme_mode = ft.ThemeMode.LIGHT
     # page.bgcolor = ft.Colors.LIGHT_BLUE_100 # ft.Colors.BLUE_GREY_800
     page.title = 'DEPOSITOS VEHICULARES'
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
 
-    ancho_win = 1100
-    largo_win = 950
+    ancho_win = 1800
+    largo_win = 1150
     
     page.window_width=ancho_win
     page.window_height=largo_win
@@ -33,14 +52,16 @@ def main(page: ft.Page):
     # page.window.min_height=largo_win
     anchocol = 220
 
-    servidor = '10.27.1.14'
+    # servidor = '10.27.1.14' # # SERVIDOR PRODUCTIVO
     # servidor = 'DESKTOP-TO7CUU2' # SERVIDIOR DE PABLO
-    # servidor = 'DESKTOP-SMKHTJB'  # SERVIDOR DE LALO
+    servidor = 'DESKTOP-SMKHTJB'  # SERVIDOR DE LALO
     basedatos = 'DepositoVehicular_DB'
     usuario = 'sa'
     claveacceso = 'Gruas$mT*$!'
     
-    stringConexion = f"DRIVER={{SQL Server}}; SERVER={servidor}; DATABASE={basedatos}; UID={usuario};PWD={claveacceso}"   #  CADENA DE CONEXION
+    # stringConexion = f"DRIVER={{SQL Server}}; SERVER={servidor}; DATABASE={basedatos}; UID={usuario};PWD={claveacceso}"   #  CADENA DE CONEXION
+
+    stringConexion = f"DRIVER={{SQL Server}}; SERVER={servidor}; DATABASE={basedatos}; Trusted_Connection=yes"   #  CADENA DE CONEXION
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #     
     def run_query(consulta, parameters = ()):
@@ -59,6 +80,43 @@ def main(page: ft.Page):
             alerta("AVISO", f"Error al conectarse a la base de datos.\nRevise su conexión o repórtelo a soporte técnico")
 
 
+    def tipoIncidenteDDL():
+        try:
+            miconexionLite = sqlite3.connect('SqlLite/DepositosVehiculares.db')
+            cursor= miconexionLite.cursor()
+            cursor.execute("SELECT Id, Descripcion FROM CatTipoIncidente WHERE Activo = 1")
+            
+            rows = cursor.fetchall()
+            miconexionLite.commit()
+            for row in rows:
+                TipoIncidenteDDL.options.append(
+                    ft.DropdownOption(
+                        key= (str(row[0])+'-'+row[1]),
+                        content= ft.Text(str(row[1]))
+                    )
+                )
+        except Exception as er:
+            print("Error: ", er)
+
+
+    def estatusIncidenteDDL():
+        try:
+            miconexionLite = sqlite3.connect('SqlLite/DepositosVehiculares.db')
+            cursor= miconexionLite.cursor()
+            cursor.execute("SELECT Id, Descripcion FROM CatEstatusIncidente WHERE Activo = 1")
+            rows = cursor.fetchall()
+            miconexionLite.commit()
+            for row in rows:
+                EstatusIncidenteDDL.options.append(
+                    ft.DropdownOption(
+                        key= (str(row[0])+'-'+row[1]),
+                        content= ft.Text(str(row[1]))
+                    )
+                )
+        except Exception as er:
+            print("Error: ", er)
+    
+
     def alerta(titulo, mensaje):
         dlg = ft.AlertDialog(title= ft.Text(titulo), content= ft.Text(mensaje))
         page.open(dlg)
@@ -68,6 +126,7 @@ def main(page: ft.Page):
     sep = 10 #separacion entre cuadros
     semana = ['Dom','Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab']
     meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
+
 
     colors=[
         ft.Colors.GREEN_600, 
@@ -91,6 +150,8 @@ def main(page: ft.Page):
     rango=[] # almacena el rango seleccionado
     itemsd=[] # almacen de contenedores para dias de mes
     regdep = [] # almacena caracteristicas y roles de los depositos
+    # # # # # # # # # # # # #
+    vehiculosInvolucrados = []  # almacena los datos de los vehiculos involucrados
    
     global status_save
     global region_sel
@@ -104,6 +165,7 @@ def main(page: ft.Page):
         drop_mes.value = meses[mes-1]
         drop_anio.value = str(anio)  
         page.update()
+
 
     def select_listdep(e):
         ref = ((((e.control.parent).parent).parent).parent).parent
@@ -119,6 +181,7 @@ def main(page: ft.Page):
             
         regdep.append(move_element)
         alerta('Registro Seleccionado', regdep[-1].nom)
+
 
     def delete_item(e):
         ref = ((((e.control.parent).parent).parent).parent).parent
@@ -184,6 +247,7 @@ def main(page: ft.Page):
             
         page.update()
 
+
     def dep_change(e): # acciones post seleccion de deposito
         color_act = colors[0]
         ls = (drop_depositos.value).index('-') 
@@ -202,7 +266,7 @@ def main(page: ft.Page):
         mosaicos = []
         for dep in regdep:
             elemento = ft.ListTile(
-                leading=ft.Text(value=str(dep.iddep), color=ft.Colors.TRANSPARENT),
+                leading=ft.Text(value=str(dep.iddep), color=ft.Colors.BLACK87),
                 title=ft.Text(value=dep.nom),
                 trailing=ft.Container(
                     width=60,
@@ -644,7 +708,6 @@ def main(page: ft.Page):
     )
 
 
-
     def limpiarControles():
         # CONTROLES DEL FORMULARIO DE REGION
         regionId.value = ''
@@ -653,12 +716,13 @@ def main(page: ft.Page):
         # CONTROLES DEL FORMULARIO DE MUNICIPIO
         municipioIdProp.value = ''
         municipioNombreProp.value = ''
-        municipioSelectRegion.value = ''
+        municipioSelectRegion.value = None
+
         # CONTROLES DEL FORMULARIO DE DEPOSITOS
         Id.value = ''
         RazonSocial.value = ''
         RepresentanteLegal.value = ''
-        municipioSelectRegion.value = ''
+        municipioSelectRegion.value = None
         DireccionDeposito.value = ''
         NombreCompletoContactos.value = ''
         CorreoElectronicoContacto.value = ''
@@ -668,6 +732,21 @@ def main(page: ft.Page):
         Ubicacion.value = ''
         Activo.value = True
         
+
+    def limpiarControlesIncidentes():
+        pass
+
+
+    def limpiarControlesVehiculosInci():
+        NoVehiculo.value = ''
+        NoPlaca.value = ''
+        NoSerie.value = ''
+        NombreConductor.value = ''
+        ApellidosConductor.value = ''
+        ModeloVehiculo.value = ''
+        noVehiculoGet()
+        page.update()
+
 
     def botonesAgregar():        
         btnAgregarRegistro.disabled =  False
@@ -679,6 +758,7 @@ def main(page: ft.Page):
         Activo.visible = False       
         btnAgregarRegistro.text = "AGREGAR"
         btnEditarRegistro.text = "EDITAR" 
+        FolioIncidente.visible = False
         page.update()
 
 
@@ -687,17 +767,110 @@ def main(page: ft.Page):
         btnEditarRegistro.visible = True
         btnCancelarAccionForm.visible = True
         regionActivo.visible = True
+        FolioIncidente.visible = True
         page.update()    
     
 
     def botonesCancelarAccionForm():
         limpiarControles()
         botonesAgregar()
+        page.update()
+
+
+    def validarDatosIncidente():
+        tipoIncidenteValor = tipoIncidenteSeleccionado()
+        print(tipoIncidenteValor)
+        estatusIncidenteValor = estatusIncidenteSeleccionado()
+        print(estatusIncidenteValor)
+        municipioDLLValor = municipioIncidenteSeleccionado()
+        print(municipioDLLValor)         
+        depositoDLLValor = depositoIncidenteSeleccionado()
+        print(depositoDLLValor)        
+        if(int(tipoIncidenteValor) > 0 and Vialidad.value.strip() != '' and Colonia.value.strip() != '' and 
+           Ubicacion.value.strip() != '' and int(municipioDLLValor) > 0 and int(depositoDLLValor) > 0 and int(estatusIncidenteValor) > 0):
+            noVehiculoGet()
+            agregarVehiculoMostrarControles()
+        else:
+            alerta('AVISO', 'FALTAN CAMPOS POR LLENAR')
+
+
+    def incidenteMostrarControles():
+        IdIncidente.visible = True
+        TipoIncidenteDDL.visible = True        
+        FechaIncidente.visible = True
+        HoraIncidente.visible = True
+        Vialidad.visible = True
+        Colonia.visible = True
+        Referencia.visible = True
+        MunicipioDDL.visible = True
+        Region.visible = True
+        DepositoDDL.visible = True
+        Latitud.visible = True
+        Longitud.visible = True
+        Ubicacion.visible = True
+        RespondienteNombreCompleto.visible = True
+        RespondienteIdentificacion.visible = True
+        NotaRespondiente.visible = True
+        Folio911.visible = True
+        EstatusIncidenteDDL.visible = True
+        # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+        IdVehiculoIncidente.visible = False
+        NoVehiculo.visible = False
+        FolioIncidente.visible = False
+        NoPlaca.visible = False
+        NoSerie.visible = False
+        MarcaDDL.visible = False
+        Linea.visible = False
+        ModeloVehiculo.visible = False
+        # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+        btnAgregarVehiculoIncidente.visible = True
+        btnDatosIncidente.visible = False
+        btnVehiculoInvolucradoAdd.visible = False
+        page.update()
+
+
+    def agregarVehiculoMostrarControles():
+        IdIncidente.visible = False
+        TipoIncidenteDDL.visible = False        
+        FechaIncidente.visible = False
+        HoraIncidente.visible = False
+        Vialidad.visible = False
+        Colonia.visible = False
+        Referencia.visible = False
+        MunicipioDDL.visible = False
+        Region.visible = False
+        DepositoDDL.visible = False
+        Latitud.visible = False
+        Longitud.visible = False
+        Ubicacion.visible = False
+        RespondienteNombreCompleto.visible = False
+        RespondienteIdentificacion.visible = False
+        NotaRespondiente.visible = False
+        Folio911.visible = False
+        EstatusIncidenteDDL.visible = False
+        # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+        IdVehiculoIncidente.visible = True
+        FolioIncidente.visible = True
+        NoVehiculo.visible = True
+        NoPlaca.visible = True
+        NoSerie.visible = True
+        MarcaDDL.visible = True
+        Linea.visible = True
+        ModeloVehiculo.visible = True
+        # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+        btnAgregarVehiculoIncidente.visible = False
+        btnDatosIncidente.visible = True
+        btnVehiculoInvolucradoAdd.visible = True
+        page.update()
+
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
     # LIST VIEW PARA MOSTRAR LAS REGIONES
     lv = ft.ListView(spacing=5, auto_scroll=True, expand=1)
     listadep = ft.ListView(spacing=5, auto_scroll=True, width=400)
+    vehiculosIncidenteslv = ft.ListView(spacing=5, auto_scroll= True, width=550)
+
+
     lista_regiones = ft.DataTable(
         columns=[
             ft.DataColumn(ft.Text('ID')),
@@ -869,6 +1042,68 @@ def main(page: ft.Page):
         page.update()
 
 
+    def tipoIncidenteSeleccionado():
+        try:
+            textoSeleccionado = TipoIncidenteDDL.value
+            posicion = textoSeleccionado.find('-')
+            if posicion != -1:
+                valor = textoSeleccionado[:posicion]                
+                return valor
+            else:
+                return 0
+        except:
+            return 0
+
+
+    def municipioIncidenteSeleccionado():
+        try:
+            textoSeleccionado = MunicipioDDL.value
+            posicion = textoSeleccionado.find('-')
+            if posicion != -1:
+                valor = textoSeleccionado[:posicion]
+                regionDescripcion(valor)
+                return valor
+            else:
+                return 0
+        except:
+            return 0
+
+    
+    def depositoIncidenteSeleccionado():
+        try:
+            textoSeleccionado = MunicipioDDL.value
+            posicion = textoSeleccionado.find('-')
+            if posicion != -1:
+                valor = textoSeleccionado[:posicion]
+                return valor
+            else:
+                return 0
+        except:
+            return 0
+
+
+    def estatusIncidenteSeleccionado():
+        try:
+            textoSeleccionado = EstatusIncidenteDDL.value
+            posicion = textoSeleccionado.find('-')
+            if posicion != -1:
+                valor = textoSeleccionado[:posicion]                
+                return valor
+            else:
+                return 0
+        except:
+            return 0
+
+
+    def regionDescripcion(municipioId):
+        consultaSql = "SELECT RegionId FROM CatMunicipio WHERE Id = ?"
+        regionId = run_query(consultaSql, (municipioId,))
+        consultaSql = "SELECT CONVERT(NVARCHAR(120), [Id]) + ') ' +  [NombreRegion] FROM [CatRegion] WHERE Id = ?"
+        nombreRegion = run_query(consultaSql, (regionId[0][0],))  
+        Region.value = nombreRegion[0][0]
+        page.update()
+
+
     def regionesDropDownList():
         consultaSql = 'SELECT Id, NombreRegion  FROM CatRegion WHERE Activo = 1 ORDER BY NombreRegion'
         regionesLst = run_query(consultaSql)        
@@ -881,6 +1116,100 @@ def main(page: ft.Page):
                     )
                 )                
             )
+        page.update()
+    
+
+    def municipiosIncidentesDropDownList():
+        consultaSql = 'SELECT Id, NombreRegion  FROM CatRegion WHERE Activo = 1 ORDER BY NombreRegion'
+        regionesLst = run_query(consultaSql)        
+        for row in regionesLst:
+            MunicipioDDL.options.append(
+                ft.DropdownOption(
+                    key = (str(row[0])+'- '+row[1]),
+                    content= ft.Text(                        
+                        str(row[1])
+                    )
+                )                
+            )
+        page.update()
+
+
+    def depositosIncidentesDropDownList():
+        consultaSql = 'SELECT Id, RazonSocial FROM CatDepositoVehicular WHERE Activo = 1'
+        depositosLst = run_query(consultaSql)
+        for row in depositosLst:
+            DepositoDDL.options.append(
+                ft.DropdownOption(
+                    key= (str(row[0])+ '-' + row[1]),
+                    content= ft.Text(
+                        str(row[1])
+                    )
+                )
+            )
+        page.update()
+        
+
+    def marcasVehiculosDropDownList():
+        consultaSql = 'SELECT Id, Marca FROM CatMarcasVehiculos WHERE Activo = 1 ORDER BY Marca'
+        marcasVeh = run_query(consultaSql)
+        for row in marcasVeh:
+            MarcaDDL.options.append(
+                ft.DropdownOption(
+                    key= (str(row[0])+ '- ' + row[1]),
+                    content= ft.Text(
+                        str(row[1])
+                    )
+                )
+            )
+
+
+    def noVehiculoGet():
+        NoVehiculoSig = len(vehiculosInvolucrados)
+        NoVehiculo.value = str(NoVehiculoSig + 1).zfill(2)
+        page.update()
+
+
+    def marcaVehiculoGet():
+        try:
+            textoSeleccionado = MarcaDDL.value
+            posicion = textoSeleccionado.find('-')
+            if posicion != -1:
+                valor = textoSeleccionado[posicion+1:]
+                return valor
+            else:
+                return 0
+        except:
+            return ''
+
+
+    def agregarVehiculoLista():
+        marcaSelected = marcaVehiculoGet() #MarcaDDL.value
+        vehiculosInvolucrados.append(
+            VehiculoIncidente(1, NoVehiculo.value, NoPlaca.value, NoSerie.value,
+                              marcaSelected, Linea.value, ModeloVehiculo.value, 
+                              NombreConductor.value, ApellidosConductor.value,
+                              'EXTRANGERAS', 'UNIAD CON PLACAS DE ARIZONA')
+        )
+        vehiculosIncidenteslv.controls.clear()  # limpiamos el listView para volverlo a llenar
+        limpiarControlesVehiculosInci()  # limpiamos los controles de registro
+        veh_temp = []
+        for vi in vehiculosInvolucrados:
+            # # print(vi.noPlacas)
+            elemento = ft.ListTile(
+                leading= ft.Text(value=str(vi.noVehiculo).zfill(2), color= ft.Colors.BLUE_400),
+                title= ft.Text(value=str(vi.marca + ' ' + vi.linea + ' ' + vi.modelo + ' ' + vi.noPlacas)),
+                trailing= ft.PopupMenuButton(
+                    icon=ft.Icons.MORE_VERT,
+                    items=[
+                        ft.PopupMenuItem(text="EDITAR"),
+                        ft.PopupMenuItem(text="ELIMINAR")
+                    ],
+                )
+            )
+            veh_temp.append(elemento)
+            for vt in veh_temp:
+                print(vt.title)
+        vehiculosIncidenteslv.controls.extend(veh_temp)
         page.update()
 
 
@@ -1019,40 +1348,95 @@ def main(page: ft.Page):
         page.update()
 
 
+    def incidentesAdd():
+        alerta('PRUEBA', 'CLICK EN BOTON AGREGAR INCIDENTE')        
+
+
+    def incidentesUpdate():
+        alerta('PRUEBA', 'CLICK EN BOTON ACTUALIZAR INCIDENTE')
+
     # CONTROLES PARA EL FORMULARIO DE REGIONES
-    regionId = ft.TextField(label='Id', width=280, read_only=True, height= 35, text_size=12)
+    regionId = ft.TextField(label='Id', width=70, read_only=True, height= 35, text_size=12)
     regionNombre = ft.TextField(label='Region', width=280, height= 35, text_size=12)
     regionActivo = ft.Checkbox(label='Disponible', visible= False)    
+    
     # CONTROLES PARA EL FORMULARIO DE MUNICIPIOS
-    municipioIdProp = ft.TextField(label='Id', width= 80, height= 35, text_size=12, read_only= True)
+    municipioIdProp = ft.TextField(label='Id', width= 70, height= 35, text_size=12, read_only= True)
     municipioNombreProp = ft.TextField(label='MUNICIPIO', width= 720, height= 35, text_size=12)
     municipioSelectRegion = Dropdown(label= 'REGIÓN', width=350, enable_filter= True, editable= True, on_change=lambda _:regionSeleccionada())
+    
     # CONTROLES PARA EL FORMULARIO DE DEPOSITOS
     Id = ft.TextField(label='Id', width= 70, height= 35, text_size=12, read_only= True)
-    RazonSocial = ft.TextField(label='RAZON SOCIAL', width= 565, height= 35, text_size=12)
-    RepresentanteLegal = ft.TextField(label='REPRESENTANTE LEGAL', width= 565, height= 35, text_size=12)
-    # MunicipioId = Dropdown(label= 'MUNICIPIO', width=500, enable_filter= True, editable= True) #, on_change=lambda _:regionSeleccionada())
-    # SE ACTUALIZO PARA SELECCIONAR LA REGION, OCUPARE EL CONTROL <municipioSelectRegion>
-    DireccionDeposito = ft.TextField(label='DIRECCIÓN', width= 700, height= 35, text_size=12)
-    NombreCompletoContactos = ft.TextField(label='NOMBRE DE CONTACTO', width= 450, height= 35, text_size=12)
-    CorreoElectronicoContacto = ft.TextField(label='CORREO ELECTRONICO', width= 400, height= 35, text_size=12)
-    Telefonos = ft.TextField(label='TELEFONO(S)', width= 300, height= 35, text_size=12)
-    Ubicacion = ft.TextField(label='UBICACION (MAPS)', width=450, height= 35, text_size=12)    
-    Latitud = ft.TextField(label='LATITUD', width=450, height= 35, text_size=12)
-    Longitud = ft.TextField(label='LONGITUD', width=450, height= 35, text_size=12)    
-    Activo = ft.Switch(label='ACTIVO', label_position=ft.LabelPosition.LEFT, visible= False)  
-
-
+    RazonSocial = ft.TextField(label='RAZON SOCIAL', width= 700, height= 35, text_size=12)
+    RepresentanteLegal = ft.TextField(label='REPRESENTANTE LEGAL', width= 405, height= 35, text_size=12)
+    NombreCompletoContactos = ft.TextField(label='NOMBRE DE CONTACTO', width= 405, height= 35, text_size=12)
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+    CorreoElectronicoContacto = ft.TextField(label='CORREO ELECTRONICO', width= 300, height= 35, text_size=12)
+    Telefonos = ft.TextField(label='TELEFONO(S)', width= 500, height= 35, text_size=12)
+    Ubicacion = ft.TextField(label='UBICACION (MAPS)', width=500)    
+    Latitud = ft.TextField(label='LATITUD', width=250)
+    Longitud = ft.TextField(label='LONGITUD', width=250)     
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+    DireccionDeposito = ft.TextField(label='DIRECCIÓN', width= 1400, height= 35, text_size=12)
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+    Activo = ft.Switch(label='ACTIVO', label_position=ft.LabelPosition.LEFT, visible= False)
+    
+    # CONTROLES PARA EL FORMULARIO DE INCIDENTES
+    IdIncidente = ft.TextField(label='Id', width= 70, read_only= True)
+    TipoIncidenteDDL = Dropdown(label= 'TIPO DE INCIDENTE', width=350, enable_filter= True, editable= True) # , on_change=lambda _:regionSeleccionada()
+    FechaIncidente = ft.TextField(label='FECHA', value= dt.datetime.now().strftime("%Y-%m-%d"), width=150) # , height= 35, text_size=12
+    HoraIncidente = ft.TextField(label='HORA', value= dt.datetime.now().strftime("%H:%M"), width=100)
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+    Vialidad = ft.TextField(label='VIALIDAD', width=600) 
+    Colonia = ft.TextField(label='COLONIA', width=350)
+    Referencia = ft.TextField(label='REFERENCIA', width=500)
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+    MunicipioDDL = Dropdown(label= 'MUNICIPIO', width=400, enable_filter= True, editable= True, on_change=lambda _:municipioIncidenteSeleccionado()) # , on_change=lambda _:regionSeleccionada()
+    Region = ft.TextField(label='REGIÓN', width=450, read_only=True)  # height= 35, text_size=12,
+    DepositoDDL = Dropdown(label= 'DEPOSITO', width=650, enable_filter= True, editable= True) # , on_change=lambda _:regionSeleccionada()
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+    RespondienteNombreCompleto = ft.TextField(label='NOMBRE COMPLETO DE RESPONDIENTE', width= 700) # , on_change=lambda
+    RespondienteIdentificacion = ft.TextField(label='IDENTIFICACIÓN DE RSPONDIENTE', width= 300) # , on_change=lambda
+    NotaRespondiente = ft.TextField(label='NOTA DE RESPONDIENTE', width= 1010)
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+    Folio911 = ft.TextField(label='FOLIO DE 911', width=200)
+    EstatusIncidenteDDL = Dropdown(label= 'ESTATUS INCIDENTE', width=350, enable_filter= True, editable= True) # , on_change=lambda
+    
+    # CONTROLES PARA EL FORMULARIO DE VEHICULOS DE INCIDENTES
+    IdVehiculoIncidente = ft.TextField(label='Id', width= 70, read_only= True, visible= False)
+    FolioIncidente = ft.TextField(label='No. FOLIO', width=200, visible= False)
+    NoVehiculo = ft.TextField(label='No. DE VEHÍCULO', width=140, visible=False)
+    NoPlaca = ft.TextField(label='PLACA', width=140, visible=False)
+    NoSerie = ft.TextField(label='No. DE SERIE', width=400, visible= False)
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+    MarcaDDL = Dropdown(label= 'MARCA', width=250, enable_filter= True, editable= True, visible=False)
+    Linea = ft.TextField(label='LINEA', width=400, visible= False) # Dropdown(label= 'LINEA', width=250, enable_filter= True, editable= True, visible= False)
+    ModeloVehiculo = ft.TextField(label='MODELO', width=200, visible=False)
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+    NombreConductor = ft.TextField(label='NOMBRE(S) DEL CONDUCTOR', width=300, visible= False)
+    ApellidosConductor = ft.TextField(label='APELIDOS DEL CONDUCTOR', width=300, visible= False)
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+    PlacasEstadoDDL = Dropdown(label= 'ORIGEN DE LAS PLACAS', width=300, enable_filter= True, editable= True, visible= False)
+    ObservacionesdelVehiculo = ft.TextField(label='OBSERVACIONES', width=900, visible= False)
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+    
     #textosControles
-    textoGuardar = ft.Text(value='GUARDAR', size=12)
-    textoEditar = ft.Text(value='EDITAR', size=12)
-    textoCancelar = ft.Text(value='CANCELAR', size=12)
+    textoGuardar = ft.Text(value='GUARDAR', size=13)
+    textoEditar = ft.Text(value='EDITAR', size=13)
+    textoCancelar = ft.Text(value='CANCELAR', size=13)
+    textoAgregarVehiculoIncidente = ft.Text(value='VER VEHICULOS INVOLUCRADOS', size=13)
+    textoDatosIncidente = ft.Text(value='DATOS DEL INCIDENTE', size=13)
+    textoVehiculosAdd = ft.Text(value='AGREGAR A LA LISTA', size=13)
 
     # BOTONES
-    btnAgregarRegistro = ft.CupertinoFilledButton(content=textoGuardar, width=180, height=45, opacity_on_click=0.3, border_radius=10, visible = True) # , on_click=lambda _:regionesAdd()
-    btnEditarRegistro = ft.CupertinoFilledButton(content=textoEditar, width=180, height=45, opacity_on_click=0.3, border_radius=10, visible = False) # , on_click=lambda _:regionesUpdate()    
-    btnCancelarAccionForm = ft.CupertinoFilledButton(content=textoCancelar, width=180, height=45, opacity_on_click=0.3, border_radius=10, visible = False) # , on_click=lambda _:regionesAdd()
-
+    btnAgregarRegistro = ft.CupertinoFilledButton(content=textoGuardar, width=180, height=55, opacity_on_click=0.3, border_radius=10, visible = True) # , on_click=lambda _:regionesAdd()
+    btnEditarRegistro = ft.CupertinoFilledButton(content=textoEditar, width=180, height=55, opacity_on_click=0.3, border_radius=10, visible = False) # , on_click=lambda _:regionesUpdate()    
+    btnCancelarAccionForm = ft.CupertinoFilledButton(content=textoCancelar, width=180, height=55, opacity_on_click=0.3, border_radius=10, visible = False) # , on_click=lambda _:regionesAdd()
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    btnAgregarVehiculoIncidente = ft.CupertinoFilledButton(content=textoAgregarVehiculoIncidente, width=180, height=50, opacity_on_click=0.3, border_radius=10, visible = True)
+    btnDatosIncidente = ft.CupertinoFilledButton(content=textoDatosIncidente, width=180, height=50, opacity_on_click=0.3, border_radius=10, visible = False)
+    btnVehiculoInvolucradoAdd = ft.CupertinoFilledButton(content=textoVehiculosAdd, width=180, height=50, opacity_on_click=0.3, border_radius=10, visible= False)
+    
 
     def on_navigation_change(e):
         selected_index = e.control.selected_index
@@ -1066,16 +1450,18 @@ def main(page: ft.Page):
             show_RolesDepositos()
         if selected_index == 4:
             show_SancionesDepositos()
+        if selected_index == 5:
+            show_Incidentes()
         page.update()
 
 
     def show_CatRegiones():
         page.controls.clear()
-        texto = ft.Text('CATÁLOGO DE REGIONES', size= 30)
+        encabezado = ft.Text('CATÁLOGO DE REGIONES', size= 30)
         btnAgregarRegistro.on_click = lambda _:regionesAdd()
         btnEditarRegistro.on_click = lambda _:regionesUpdate()
         btnCancelarAccionForm.on_click = lambda _:botonesCancelarAccionForm()
-        page.add(texto)
+        page.add(encabezado)
         page.add(
             ft.Row(
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
@@ -1117,14 +1503,14 @@ def main(page: ft.Page):
 
     def show_CatMunicipios():
         page.controls.clear()
-        texto = ft.Text('CATÁLOGO DE MUNICIPIOS', size= 30)
+        encabezado = ft.Text('CATÁLOGO DE MUNICIPIOS', size= 30)
         municipioSelectRegion.options = []
         btnAgregarRegistro.on_click = lambda _:municipioAdd()
         btnEditarRegistro.on_click = lambda _:municipioUpdate()
         btnCancelarAccionForm.on_click = lambda _:botonesCancelarAccionForm()
         regionesDropDownList()
         municipiosLista()
-        page.add(texto)
+        page.add(encabezado)
         page.add(
             ft.Row(
                 vertical_alignment= ft.CrossAxisAlignment.CENTER,
@@ -1162,15 +1548,17 @@ def main(page: ft.Page):
 
     def show_Depositos():
         page.controls.clear()
-        texto = ft.Text('CATÁLOGO DE DEPOSITOS', size= 30)
+        encabezado = ft.Text('CATÁLOGO DE DEPOSITOS', size= 30)
         municipioSelectRegion.options = []
         btnAgregarRegistro.on_click = lambda _:depositoAdd()
         btnEditarRegistro.on_click = lambda _:depositoUpdate()
         btnCancelarAccionForm.on_click = lambda _:botonesCancelarAccionForm()
-        page.add(texto)
+        page.add(encabezado)
         page.add(
             ft.Row(
-                vertical_alignment= ft.CrossAxisAlignment.CENTER,
+                # vertical_alignment= ft.CrossAxisAlignment.START,                
+                width=1750,
+                wrap=True,
                 controls= [
                     ft.Column(
                         controls=[Id]
@@ -1180,51 +1568,26 @@ def main(page: ft.Page):
                     ),
                     ft.Column(
                         controls=[RepresentanteLegal]
-                    )
-                ]
-            ),
-            ft.Row(
-                vertical_alignment= ft.CrossAxisAlignment.CENTER,
-                controls=[
-                    ft.Column(
-                        controls=[municipioSelectRegion]
                     ),
-                    ft.Column(
-                        controls=[DireccionDeposito]
-                    )
-                ]
-            ),
-            ft.Row(
-                controls=[
                     ft.Column(
                         controls= [NombreCompletoContactos]
-                    ),
+                    )
+                ]
+            ),
+            ft.Row(
+                # vertical_alignment= ft.CrossAxisAlignment.START,                
+                width=1750,
+                wrap=True,
+                controls=[                    
                     ft.Column(
                         controls=[CorreoElectronicoContacto]
                     ),
                     ft.Column(
                         controls=[Telefonos]
-                    )
-                ]                                
-            ),
-            ft.Row(
-                vertical_alignment= ft.CrossAxisAlignment.CENTER,
-                controls=[
+                    ),
                     ft.Column(                        
                         controls=[Ubicacion]
-                    )
-                ]
-            ),
-            ft.Row(
-                vertical_alignment= ft.CrossAxisAlignment.CENTER,
-                controls=[
-                    ft.Column(                        
-                        controls=[ft.Text('COORDENADAS', size= 15, weight= 20)]
-                    )
-                ]
-            ),
-            ft.Row(
-                controls= [
+                    ),
                     ft.Column(
                         controls= [Latitud]
                     ),
@@ -1234,6 +1597,28 @@ def main(page: ft.Page):
                 ]
             ),
             ft.Row(
+                # vertical_alignment= ft.CrossAxisAlignment.START,                
+                width=1750,
+                wrap=True,
+                controls=[
+                    ft.Column(
+                        controls=[DireccionDeposito]
+                    )
+                ]
+            ),
+            ft.Row(
+                # vertical_alignment= ft.CrossAxisAlignment.START,                
+                width=1750,
+                wrap=True,
+                controls=[                    
+                    ft.Column(
+                        controls=[municipioSelectRegion]
+                    )                    
+                ]                                
+            ),
+            ft.Row(
+                width=1750,
+                wrap=True,
                 controls=[
                     ft.Column(
                         controls=[Activo]
@@ -1241,14 +1626,15 @@ def main(page: ft.Page):
                 ]
             ),
             ft.Row(
-                vertical_alignment= ft.CrossAxisAlignment.START,
+                # vertical_alignment= ft.CrossAxisAlignment.START,
                 controls= [btnAgregarRegistro, btnEditarRegistro, btnCancelarAccionForm]
             ),
             ft.Row(
-                vertical_alignment= ft.CrossAxisAlignment.CENTER,
+                # vertical_alignment= ft.CrossAxisAlignment.CENTER,
                 controls=[
                     ft.Container(
-                        width=1100,
+                        width=1750,
+                        height=300,
                         alignment=ft.Alignment(0.0, 0.0),
                         content = lv
                     )
@@ -1263,10 +1649,10 @@ def main(page: ft.Page):
 
     def show_RolesDepositos():
         page.controls.clear()
-        texto = ft.Text('ROLES DE DEPOSITOS', size= 30)
+        encabezado = ft.Text('ROLES DE DEPOSITOS', size= 30)
         drop_region.options = []
         drop_region.options = reg_options()
-        page.add(texto)
+        page.add(encabezado)
         page.add(
             ft.Row(
                 controls=[
@@ -1311,8 +1697,88 @@ def main(page: ft.Page):
 
     def show_SancionesDepositos():
         page.controls.clear()
-        texto = ft.Text('SANCIONES A DEPOSITOS', size= 30)
-        page.add(texto)
+        encabezado = ft.Text('SANCIONES A DEPOSITOS', size= 30)
+        page.add(encabezado)
+
+
+    def show_Incidentes():
+        page.controls.clear()
+        encabezado = ft.Text('REGISTRO DE INCIDENTES', size= 30)
+        btnAgregarRegistro.on_click = lambda _:incidentesAdd()        
+        btnEditarRegistro.on_click = lambda _:incidentesUpdate()
+        btnCancelarAccionForm.on_click = lambda _:botonesCancelarAccionForm()
+        # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+        btnAgregarVehiculoIncidente.on_click = lambda _:validarDatosIncidente()
+        btnDatosIncidente.on_click = lambda _:incidenteMostrarControles()
+        btnVehiculoInvolucradoAdd.on_click = lambda _:agregarVehiculoLista()
+        # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+        TipoIncidenteDDL.options = []
+        tipoIncidenteDDL()
+        EstatusIncidenteDDL.options =[]
+        estatusIncidenteDDL()
+        MunicipioDDL.options = []
+        municipiosIncidentesDropDownList()
+        DepositoDDL.options = []
+        depositosIncidentesDropDownList()
+        MarcaDDL.options = []
+        marcasVehiculosDropDownList()
+
+        page.add(encabezado)
+        page.add(
+            ft.Row(
+                controls=[
+                    ft.Row(
+                        controls=[
+                            ft.Column(
+                                controls=[
+                                    ft.Row(controls=[IdIncidente, TipoIncidenteDDL, FechaIncidente, HoraIncidente]),
+                                    ft.Row(controls=[Vialidad, Colonia, Referencia]),
+                                    ft.Row(controls=[Latitud, Longitud, Ubicacion]),
+                                    ft.Row(controls=[MunicipioDDL, Region, DepositoDDL]),                                    
+                                    ft.Row(controls=[RespondienteNombreCompleto, RespondienteIdentificacion]),
+                                    ft.Row(controls=[NotaRespondiente]),
+                                    ft.Row(controls=[Folio911, EstatusIncidenteDDL]),
+                                    ft.Row(controls=[btnAgregarVehiculoIncidente, btnDatosIncidente])                                                                        
+                                ]
+                            )
+                        ]
+                    )                    
+                ]
+            ),
+            ft.Row(
+                controls=[
+                    ft.Column(
+                        controls=[
+                            ft.Row(controls=[IdVehiculoIncidente, FolioIncidente, NoVehiculo]),
+                            ft.Row(controls=[NoPlaca, NoSerie]),
+                            ft.Row(controls=[MarcaDDL, Linea, ModeloVehiculo]),
+                            ft.Row(controls=[NombreConductor, ApellidosConductor]),
+                            ft.Row(controls=[PlacasEstadoDDL, ObservacionesdelVehiculo])
+                        ]
+                    ),
+                    ft.Column(
+                        controls=[
+                            ft.Container(
+                                content= ft.Column(
+                                    controls=[ft.Row(controls=[vehiculosIncidenteslv])]
+                                )
+                            )
+                        ]
+                    )
+                ]  
+            ),
+            ft.Row(
+                controls=[btnVehiculoInvolucradoAdd]
+            ),
+            ft.Row(
+                controls=[
+                    ft.Row(
+                        controls=[btnAgregarRegistro, btnEditarRegistro, btnCancelarAccionForm]
+                    )
+                ]
+            )
+        )        
+        page.update()
 
 
     barradeNavegacion = ft.NavigationBar(
@@ -1323,14 +1789,17 @@ def main(page: ft.Page):
             ft.NavigationBarDestination(icon= ft.Icons.ACCOUNT_TREE, label= 'Catálogo de Municipios'),
             ft.NavigationBarDestination(icon= ft.Icons.ADD_BUSINESS, label= 'Catálogo de Depositos'),
             ft.NavigationBarDestination(icon= ft.Icons.ACCESS_TIME_FILLED_ROUNDED, label= 'Roles de Depositos'),
-            ft.NavigationBarDestination(icon= ft.Icons.INFO_SHARP, label= 'Sanciones Depositos')  # ACCOUNT_BOX, label= 'Sanciones Depositos')  # ADD_CARD_OUTLINED   # ADD_COMMENT
+            ft.NavigationBarDestination(icon= ft.Icons.INFO_SHARP, label= 'Sanciones Depositos'),  # ACCOUNT_BOX, label= 'Sanciones Depositos')  # ADD_CARD_OUTLINED   # ADD_COMMENT
+            ft.NavigationBarDestination(icon= ft.Icons.PARK_OUTLINED, label= 'Incidentes')
         ],
         bgcolor= ft.Colors.LIGHT_BLUE_800,
         indicator_color= ft.Colors.GREEN_400,
         overlay_color= ft.Colors.AMBER_400
     )
 
+
     page.navigation_bar = barradeNavegacion
     show_CatRegiones()
+
 
 ft.app(target= main)
