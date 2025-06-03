@@ -1,16 +1,4 @@
-USE [DepositoVehicular_DB]
-GO
-
-/****** Object:  Table [dbo].[CatDepositoVehicular]    Script Date: 22/05/2025 11:20:59 a. m. ******/
-IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[CatDepositoVehicular]') AND type in (N'U'))
-DROP TABLE [dbo].[CatDepositoVehicular]
-GO
-
-/****** Object:  Table [dbo].[CatDepositoVehicular]    Script Date: 22/05/2025 11:20:59 a. m. ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
+USE DepositoVehicular_DB
 GO
 
 CREATE TABLE [dbo].[CatDepositoVehicular](
@@ -36,5 +24,3 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-
-

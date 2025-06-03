@@ -34,7 +34,8 @@ def main(page: ft.Page):
     anchocol = 220
 
     # servidor = 'ECI-SDMYT-001'
-    servidor = 'DESKTOP-TO7CUU2'
+    #servidor = 'DESKTOP-TO7CUU2'
+    servidor = 'DESKTOP-SMKHTJB'  # SERVIDOR DE LALO
     basedatos = 'DepositoVehicular_DB'
     
     stringConexion = f"DRIVER={{SQL Server}}; SERVER={servidor}; DATABASE={basedatos}; Trusted_Connection=yes"   #  CADENA DE CONEXION
@@ -1179,7 +1180,7 @@ def main(page: ft.Page):
                     ft.Column(
                         controls=[RepresentanteLegal]
                     )
-                ]
+                ], expand=True
             ),
             ft.Row(
                 vertical_alignment= ft.CrossAxisAlignment.CENTER,
@@ -1247,10 +1248,11 @@ def main(page: ft.Page):
                 controls=[
                     ft.Container(
                         width=1100,
+                        height=250,
                         alignment=ft.alignment.top_center,
                         content = lv
                     )
-                ]                
+                ], expand=True              
             )
         )
         depositosLista()
