@@ -3,6 +3,10 @@ import pyodbc
 import calendar
 import datetime as dt
 import sqlite3
+import flet_map as map
+import requests
+from bs4 import BeautifulSoup
+
 
 from flet import *
 from datetime import datetime
@@ -32,6 +36,61 @@ class VehiculoIncidente():
         self.origenPLacasId = origenPlacasId
         self.observaciones = observaciones
 
+class mapa(): #objeto mapa
+
+    def __init__(self, lat, lon):
+        self.marker_layer = ft.Ref[map.MarkerLayer]()
+        self.circle_layer = ft.Ref[map.CircleLayer]()
+        self.result = map.Map(
+            expand=True,
+            initial_center=map.MapLatitudeLongitude(lat, lon),
+            initial_zoom=15,
+            min_zoom=3,
+            interaction_configuration=map.MapInteractionConfiguration(
+                flags=map.MapInteractiveFlag.ALL
+            ),
+            on_init=lambda e: print(f"Initialized Map"),
+            on_event=lambda e: print(e),
+            layers=[
+                map.TileLayer(
+                    url_template="https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                    on_image_error=lambda e: print("TileLayer Error"),
+                ),
+                map.RichAttribution(
+                    attributions=[
+                        map.TextSourceAttribution(
+                            text="OpenStreetMap Contributors",
+                            on_click=lambda e: e.page.launch_url(
+                                "https://openstreetmap.org/copyright"
+                            ),
+                        ),
+                        map.TextSourceAttribution(
+                            text="Flet",
+                            on_click=lambda e: e.page.launch_url("https://flet.dev"),
+                        ),
+                    ]
+                ),
+                map.SimpleAttribution(
+                    text="Flet",
+                    alignment=ft.Alignment(0.0,-1.0),
+                    on_click=lambda e: print("Clicked SimpleAttribution"),
+                ),
+                map.MarkerLayer(
+                    ref=self.marker_layer,
+                    markers=[
+                        map.Marker(
+                        content=ft.Icon(ft.Icons.LOCATION_ON, color=ft.Colors.RED_ACCENT_700),
+                        coordinates=map.MapLatitudeLongitude(lat, lon),
+                        )
+                    ],
+                ),
+                map.CircleLayer(
+                    ref=self.circle_layer,
+                    circles=[],
+                ),
+                
+            ],
+        )
 
 def main(page: ft.Page):
     page.theme_mode = ft.ThemeMode.LIGHT
@@ -1454,6 +1513,44 @@ def main(page: ft.Page):
         botonesAgregar()
         page.update()
 
+    def get_coor(url):#extraccion coordenadas de enlace google maps
+        
+        coordenadas = [0,0]
+        pagina = requests.get(url) # extrae datos de url enviado
+
+        if pagina.status_code == 200: # en caso de conexion exitosa 
+            soup = BeautifulSoup(pagina.content, 'html.parser') # convierte la informacion en html
+            infopag = soup.find_all('meta') # extrae la informacion de etiquetas meta
+            marker = (infopag[3].get('content')).split('&') # en la 4ta etiqueta se encuentran las coordenadas almacenadas en la propiedad markers
+            
+            for dato in marker: # se extrae en especifico la informacion de markers
+                if dato[:4] == 'mark':
+                    coordenadas.clear()
+                    li = dato.index('%')
+                    lati = float(dato[8:li])
+                    coordenadas.append(lati)
+                    ls = dato.index('C')+1
+                    long = float(dato[ls:])
+                    coordenadas.append(long)
+        
+        return coordenadas
+    
+    def abrir_mapa():
+        url = Ubicacion.value
+        if url!='':
+            coord = get_coor(url)
+            #mapa
+            if coord[0] == 0 and coord[1]==0:
+                alerta('AVISO', 'Error al intentar abrir ubicacion, actualice el enlace')
+            else:
+                ubmap = mapa(coord[0], coord[1])
+                visor_map.content = ubmap.result
+                page.open(bs)
+            
+            page.update()
+        else:
+            alerta('AVISO', 'No hay ubicacion disponible')
+
 
     def incidentesAdd():
         alerta('PRUEBA', 'CLICK EN BOTON AGREGAR INCIDENTE')        
@@ -1538,6 +1635,27 @@ def main(page: ft.Page):
     textoAgregarVehiculoIncidente = ft.Text(value='VER VEHICULOS INVOLUCRADOS', size=13)
     textoDatosIncidente = ft.Text(value='DATOS DEL INCIDENTE', size=13)
     textoVehiculosAdd = ft.Text(value='AGREGAR A LA LISTA', size=13)
+
+    # Controles mapa
+    visor_map = ft.InteractiveViewer(
+                    width=900,
+                    height=900,
+                    min_scale=0.1,
+                    boundary_margin=ft.Margin(10,10,10,10),
+                    content=ft.Text('')
+                )
+    
+    bs = ft.BottomSheet(
+        ft.Container(
+                    width=900,
+                    height=900,
+                    content=visor_map
+                ),
+        open=False,
+    )
+    
+    btn_map = ft.ElevatedButton("Ver ubicacion", on_click= lambda _:abrir_mapa())
+
 
     # BOTONES
     btnAgregarRegistro = ft.CupertinoFilledButton(content=textoGuardar, width=180, height=55, opacity_on_click=0.3, border_radius=10, visible = True) # , on_click=lambda _:regionesAdd()
@@ -1704,6 +1822,9 @@ def main(page: ft.Page):
                     ),
                     ft.Column(
                         controls= [Longitud]
+                    ),
+                    ft.Column(
+                        controls= [btn_map]
                     )
                 ]
             ),
