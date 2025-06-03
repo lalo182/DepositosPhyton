@@ -80,14 +80,19 @@ def main(page: ft.Page):
             alerta("AVISO", f"Error al conectarse a la base de datos.\nRevise su conexión o repórtelo a soporte técnico")
 
 
+    def run_queryLite(query, parameters = ()):
+        miconexionLite = 'SqlLite/DepositosVehiculares.db'
+        with sqlite3.connect(miconexionLite) as conn:
+            cursor = conn.cursor()
+            result = cursor.execute(query, parameters)
+            conn.commit()
+        return result
+
+
     def tipoIncidenteDDL():
         try:
-            miconexionLite = sqlite3.connect('SqlLite/DepositosVehiculares.db')
-            cursor= miconexionLite.cursor()
-            cursor.execute("SELECT Id, Descripcion FROM CatTipoIncidente WHERE Activo = 1")
-            
-            rows = cursor.fetchall()
-            miconexionLite.commit()
+            consultaLite = 'SELECT Id, Descripcion FROM CatTipoIncidente WHERE Activo = 1'
+            rows = run_queryLite(consultaLite)
             for row in rows:
                 TipoIncidenteDDL.options.append(
                     ft.DropdownOption(
@@ -101,11 +106,8 @@ def main(page: ft.Page):
 
     def estatusIncidenteDDL():
         try:
-            miconexionLite = sqlite3.connect('SqlLite/DepositosVehiculares.db')
-            cursor= miconexionLite.cursor()
-            cursor.execute("SELECT Id, Descripcion FROM CatEstatusIncidente WHERE Activo = 1")
-            rows = cursor.fetchall()
-            miconexionLite.commit()
+            consultaLite = 'SELECT Id, Descripcion FROM CatEstatusIncidente WHERE Activo = 1'
+            rows = run_queryLite(consultaLite)
             for row in rows:
                 EstatusIncidenteDDL.options.append(
                     ft.DropdownOption(
@@ -116,6 +118,21 @@ def main(page: ft.Page):
         except Exception as er:
             print("Error: ", er)
     
+
+    def tipoVehiculoDDL():
+        try:
+            consultaLite = 'SELECT Id, Descripcion FROM CatTipoVehiculo WHERE Activo = 1'
+            rows = run_queryLite(consultaLite)
+            for row in rows:
+                TipoVehiculoDDL.options.append(
+                    ft.DropdownOption(
+                        key= (str(row[0])+'-'+row[1]),
+                        content= ft.Text(str(row[1]))                        
+                    )
+                )
+        except Exception as ex:
+            alerta("Error:", ex)
+
 
     def alerta(titulo, mensaje):
         dlg = ft.AlertDialog(title= ft.Text(titulo), content= ft.Text(mensaje))
@@ -739,11 +756,13 @@ def main(page: ft.Page):
 
     def limpiarControlesVehiculosInci():
         NoVehiculo.value = ''
+        SinPlacas.value = False        
         NoPlaca.value = ''
         NoSerie.value = ''
         NombreConductor.value = ''
         ApellidosConductor.value = ''
         ModeloVehiculo.value = ''
+        ObservacionesdelVehiculo.value = ''
         noVehiculoGet()
         page.update()
 
@@ -778,20 +797,18 @@ def main(page: ft.Page):
 
 
     def validarDatosIncidente():
-        tipoIncidenteValor = tipoIncidenteSeleccionado()
-        print(tipoIncidenteValor)
-        estatusIncidenteValor = estatusIncidenteSeleccionado()
-        print(estatusIncidenteValor)
-        municipioDLLValor = municipioIncidenteSeleccionado()
-        print(municipioDLLValor)         
-        depositoDLLValor = depositoIncidenteSeleccionado()
-        print(depositoDLLValor)        
-        if(int(tipoIncidenteValor) > 0 and Vialidad.value.strip() != '' and Colonia.value.strip() != '' and 
-           Ubicacion.value.strip() != '' and int(municipioDLLValor) > 0 and int(depositoDLLValor) > 0 and int(estatusIncidenteValor) > 0):
-            noVehiculoGet()
-            agregarVehiculoMostrarControles()
-        else:
-            alerta('AVISO', 'FALTAN CAMPOS POR LLENAR')
+        noVehiculoGet()
+        agregarVehiculoMostrarControles()
+        # tipoIncidenteValor = tipoIncidenteSeleccionado()
+        # estatusIncidenteValor = estatusIncidenteSeleccionado()
+        # municipioDLLValor = municipioIncidenteSeleccionado()
+        # depositoDLLValor = depositoIncidenteSeleccionado()
+        # if(int(tipoIncidenteValor) > 0 and Vialidad.value.strip() != '' and Colonia.value.strip() != '' and 
+        #    Ubicacion.value.strip() != '' and int(municipioDLLValor) > 0 and int(depositoDLLValor) > 0 and int(estatusIncidenteValor) > 0):
+        #     noVehiculoGet()
+        #     agregarVehiculoMostrarControles()
+        # else:
+        #     alerta('AVISO', 'FALTAN CAMPOS POR LLENAR')
 
 
     def incidenteMostrarControles():
@@ -815,13 +832,20 @@ def main(page: ft.Page):
         EstatusIncidenteDDL.visible = True
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
         IdVehiculoIncidente.visible = False
-        NoVehiculo.visible = False
         FolioIncidente.visible = False
+        NoVehiculo.visible = False        
+        TipoVehiculoDDL.visible = False
+        SinPlacas.visible = False
+        LugarOrigenPlacasDDL.visible = False
         NoPlaca.visible = False
         NoSerie.visible = False
+        ColorVehIncidente.visible = False
         MarcaDDL.visible = False
         Linea.visible = False
         ModeloVehiculo.visible = False
+        NombreConductor.visible = False
+        ApellidosConductor.visible = False
+        ObservacionesdelVehiculo.visible = False
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
         btnAgregarVehiculoIncidente.visible = True
         btnDatosIncidente.visible = False
@@ -850,13 +874,20 @@ def main(page: ft.Page):
         EstatusIncidenteDDL.visible = False
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
         IdVehiculoIncidente.visible = True
-        FolioIncidente.visible = True
+        FolioIncidente.visible = False # # # SOLO SERA VISIBLE AL EDITAR
         NoVehiculo.visible = True
+        TipoVehiculoDDL.visible = True
+        SinPlacas.visible = True 
+        LugarOrigenPlacasDDL.visible = True       
         NoPlaca.visible = True
         NoSerie.visible = True
+        ColorVehIncidente.visible = True
         MarcaDDL.visible = True
         Linea.visible = True
         ModeloVehiculo.visible = True
+        NombreConductor.visible = True
+        ApellidosConductor.visible = True
+        ObservacionesdelVehiculo.visible = True
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
         btnAgregarVehiculoIncidente.visible = False
         btnDatosIncidente.visible = True
@@ -1095,6 +1126,63 @@ def main(page: ft.Page):
             return 0
 
 
+    def tipoVehiculoSeleccionado():
+        try:
+            textoSeleccionado = TipoVehiculoDDL.value
+            posicion = textoSeleccionado.find('-')
+            if posicion != -1:
+                valor = textoSeleccionado[:posicion]
+                print("tipoVehiculoSeleccionado:", valor)
+                if(valor == '2'):
+                    SinPlacas.disabled = True
+                    SinPlacas.value = False
+                    LugarOrigenPlacasDDL.disabled = True
+                    NoPlaca.value = ''
+                    NoPlaca.disabled = True
+                    NoSerie.value = ''
+                    NoSerie.disabled = True                    
+                    MarcaDDL.disabled = True
+                    Linea.value = ''
+                    Linea.disabled = True
+                    ModeloVehiculo.value = ''
+                    ModeloVehiculo.disabled = True
+                    NombreConductor.value = ''
+                    NombreConductor.disabled = True
+                    ApellidosConductor.value = ''
+                    ApellidosConductor.disabled = True
+                    page.update()
+                if(valor != '2'):
+                    SinPlacas.disabled = False
+                    LugarOrigenPlacasDDL.disabled = True
+                    NoPlaca.disabled = False
+                    NoSerie.disabled = False
+                    MarcaDDL.disabled = False
+                    Linea.disabled = False
+                    ModeloVehiculo.disabled = False
+                    NombreConductor.disabled = False
+                    ApellidosConductor.disabled = False
+                    page.update()
+            else:
+                return 0
+        except:
+            return 0
+    
+
+
+
+    def marcaIdSeleccionado():
+        try:
+            textoSelect = MarcaDDL.value
+            posicion = textoSelect.find('-')
+            if posicion != -1:
+                valor = textoSelect[:posicion]
+                return valor
+            else:
+                return 0
+        except:
+            return 0
+
+
     def regionDescripcion(municipioId):
         consultaSql = "SELECT RegionId FROM CatMunicipio WHERE Id = ?"
         regionId = run_query(consultaSql, (municipioId,))
@@ -1182,21 +1270,40 @@ def main(page: ft.Page):
             return ''
 
 
+    def vehiculoSinPlacasCheck(e):
+        print(e)
+        if e.data == 'true':
+            LugarOrigenPlacasDDL.disabled = True
+            NoPlaca.disabled = True
+        if e.data == 'false':
+            LugarOrigenPlacasDDL.disabled = False
+            NoPlaca.disabled = False
+        page.update()
+        # sinplacasVal = SinPlacas.value
+        # if sinplacasVal == True:
+        #     LugarOrigenPlacasDDL.disabled = True
+        #     NoPlaca.disabled = True
+        # if sinplacasVal == False:
+        #     LugarOrigenPlacasDDL.disabled = False
+        #     NoPlaca.disabled = False
+        # page.update()
+        
+
     def agregarVehiculoLista():
-        marcaSelected = marcaVehiculoGet() #MarcaDDL.value
+        marcaSelected = marcaVehiculoGet()
+        marcaId = marcaIdSeleccionado()
         vehiculosInvolucrados.append(
             VehiculoIncidente(1, NoVehiculo.value, NoPlaca.value, NoSerie.value,
-                              marcaSelected, Linea.value, ModeloVehiculo.value, 
+                              marcaId, marcaSelected, Linea.value, ModeloVehiculo.value, 
                               NombreConductor.value, ApellidosConductor.value,
-                              'EXTRANGERAS', 'UNIAD CON PLACAS DE ARIZONA')
+                              1, 'UNIDAD CON PLACAS DE ARIZONA')
         )
         vehiculosIncidenteslv.controls.clear()  # limpiamos el listView para volverlo a llenar
         limpiarControlesVehiculosInci()  # limpiamos los controles de registro
         veh_temp = []
         for vi in vehiculosInvolucrados:
-            # # print(vi.noPlacas)
             elemento = ft.ListTile(
-                leading= ft.Text(value=str(vi.noVehiculo).zfill(2), color= ft.Colors.BLUE_400),
+                leading= ft.Text(value=str(vi.noVehiculo).zfill(2), color= ft.Colors.BLACK),
                 title= ft.Text(value=str(vi.marca + ' ' + vi.linea + ' ' + vi.modelo + ' ' + vi.noPlacas)),
                 trailing= ft.PopupMenuButton(
                     icon=ft.Icons.MORE_VERT,
@@ -1383,40 +1490,44 @@ def main(page: ft.Page):
     
     # CONTROLES PARA EL FORMULARIO DE INCIDENTES
     IdIncidente = ft.TextField(label='Id', width= 70, read_only= True)
-    TipoIncidenteDDL = Dropdown(label= 'TIPO DE INCIDENTE', width=350, enable_filter= True, editable= True) # , on_change=lambda _:regionSeleccionada()
-    FechaIncidente = ft.TextField(label='FECHA', value= dt.datetime.now().strftime("%Y-%m-%d"), width=150) # , height= 35, text_size=12
+    TipoIncidenteDDL = Dropdown(label= 'TIPO DE INCIDENTE', width=350, enable_filter= True, editable= True)
+    FechaIncidente = ft.TextField(label='FECHA', value= dt.datetime.now().strftime("%Y-%m-%d"), width=150)
     HoraIncidente = ft.TextField(label='HORA', value= dt.datetime.now().strftime("%H:%M"), width=100)
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
     Vialidad = ft.TextField(label='VIALIDAD', width=600) 
     Colonia = ft.TextField(label='COLONIA', width=350)
     Referencia = ft.TextField(label='REFERENCIA', width=500)
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-    MunicipioDDL = Dropdown(label= 'MUNICIPIO', width=400, enable_filter= True, editable= True, on_change=lambda _:municipioIncidenteSeleccionado()) # , on_change=lambda _:regionSeleccionada()
-    Region = ft.TextField(label='REGIÓN', width=450, read_only=True)  # height= 35, text_size=12,
-    DepositoDDL = Dropdown(label= 'DEPOSITO', width=650, enable_filter= True, editable= True) # , on_change=lambda _:regionSeleccionada()
+    MunicipioDDL = Dropdown(label= 'MUNICIPIO', width=400, enable_filter= True, editable= True, on_change=lambda _:municipioIncidenteSeleccionado())
+    Region = ft.TextField(label='REGIÓN', width=450, read_only=True)
+    DepositoDDL = Dropdown(label= 'DEPOSITO', width=650, enable_filter= True, editable= True)
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-    RespondienteNombreCompleto = ft.TextField(label='NOMBRE COMPLETO DE RESPONDIENTE', width= 700) # , on_change=lambda
-    RespondienteIdentificacion = ft.TextField(label='IDENTIFICACIÓN DE RSPONDIENTE', width= 300) # , on_change=lambda
+    RespondienteNombreCompleto = ft.TextField(label='NOMBRE COMPLETO DE RESPONDIENTE', width= 700)
+    RespondienteIdentificacion = ft.TextField(label='IDENTIFICACIÓN DE RSPONDIENTE', width= 300)
     NotaRespondiente = ft.TextField(label='NOTA DE RESPONDIENTE', width= 1010)
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
     Folio911 = ft.TextField(label='FOLIO DE 911', width=200)
-    EstatusIncidenteDDL = Dropdown(label= 'ESTATUS INCIDENTE', width=350, enable_filter= True, editable= True) # , on_change=lambda
-    
+    EstatusIncidenteDDL = Dropdown(label= 'ESTATUS INCIDENTE', width=350, enable_filter= True, editable= True) 
+
     # CONTROLES PARA EL FORMULARIO DE VEHICULOS DE INCIDENTES
     IdVehiculoIncidente = ft.TextField(label='Id', width= 70, read_only= True, visible= False)
-    FolioIncidente = ft.TextField(label='No. FOLIO', width=200, visible= False)
-    NoVehiculo = ft.TextField(label='No. DE VEHÍCULO', width=140, visible=False)
-    NoPlaca = ft.TextField(label='PLACA', width=140, visible=False)
+    FolioIncidente = ft.TextField(label='No. FOLIO', width=200, read_only= True, visible= False)
+    NoVehiculo = ft.TextField(label='No. DE VEHÍCULO', width=140, read_only= True, visible=False)
+    TipoVehiculoDDL = Dropdown(label= 'TIPO DE VEHICULO', width=500, enable_filter= True, editable= True, visible= False, on_change=lambda _:tipoVehiculoSeleccionado())
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    SinPlacas = ft.Checkbox(label='NO TIENE PLACAS', visible= False, on_change=vehiculoSinPlacasCheck)
+    LugarOrigenPlacasDDL = Dropdown(label= 'ORIGEN DE LAS PLACAS', width=400, enable_filter= True, editable= True, visible= False)
+    NoPlaca = ft.TextField(label='PLACA', width=200, visible=False)
     NoSerie = ft.TextField(label='No. DE SERIE', width=400, visible= False)
+    ColorVehIncidente = ft.TextField(label='COLOR', width=200, visible= False)
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
     MarcaDDL = Dropdown(label= 'MARCA', width=250, enable_filter= True, editable= True, visible=False)
-    Linea = ft.TextField(label='LINEA', width=400, visible= False) # Dropdown(label= 'LINEA', width=250, enable_filter= True, editable= True, visible= False)
+    Linea = ft.TextField(label='LINEA', width=400, visible= False)
     ModeloVehiculo = ft.TextField(label='MODELO', width=200, visible=False)
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
     NombreConductor = ft.TextField(label='NOMBRE(S) DEL CONDUCTOR', width=300, visible= False)
     ApellidosConductor = ft.TextField(label='APELIDOS DEL CONDUCTOR', width=300, visible= False)
-    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-    PlacasEstadoDDL = Dropdown(label= 'ORIGEN DE LAS PLACAS', width=300, enable_filter= True, editable= True, visible= False)
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     ObservacionesdelVehiculo = ft.TextField(label='OBSERVACIONES', width=900, visible= False)
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
     
@@ -1720,6 +1831,8 @@ def main(page: ft.Page):
         municipiosIncidentesDropDownList()
         DepositoDDL.options = []
         depositosIncidentesDropDownList()
+        TipoVehiculoDDL.options = []
+        tipoVehiculoDDL()
         MarcaDDL.options = []
         marcasVehiculosDropDownList()
 
@@ -1749,11 +1862,11 @@ def main(page: ft.Page):
                 controls=[
                     ft.Column(
                         controls=[
-                            ft.Row(controls=[IdVehiculoIncidente, FolioIncidente, NoVehiculo]),
-                            ft.Row(controls=[NoPlaca, NoSerie]),
+                            ft.Row(controls=[IdVehiculoIncidente, FolioIncidente, NoVehiculo, TipoVehiculoDDL]),
+                            ft.Row(controls=[SinPlacas,LugarOrigenPlacasDDL,NoPlaca, NoSerie]),
                             ft.Row(controls=[MarcaDDL, Linea, ModeloVehiculo]),
                             ft.Row(controls=[NombreConductor, ApellidosConductor]),
-                            ft.Row(controls=[PlacasEstadoDDL, ObservacionesdelVehiculo])
+                            ft.Row(controls=[ObservacionesdelVehiculo])
                         ]
                     ),
                     ft.Column(
