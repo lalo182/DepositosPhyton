@@ -112,8 +112,8 @@ def main(page: ft.Page):
     anchocol = 220
 
     # servidor = '10.27.1.14' # # SERVIDOR PRODUCTIVO
-    servidor = 'DESKTOP-TO7CUU2' # SERVIDIOR DE PABLO
-    #servidor = 'DESKTOP-SMKHTJB'  # SERVIDOR DE LALO
+    # servidor = 'DESKTOP-TO7CUU2' # SERVIDIOR DE PABLO
+    servidor = 'DESKTOP-SMKHTJB'  # SERVIDOR DE LALO
     basedatos = 'DepositoVehicular_DB'
     usuario = 'sa'
     claveacceso = 'Gruas$mT*$!'
@@ -1212,7 +1212,7 @@ def main(page: ft.Page):
                     page.update()
                 if(valor != '2'):
                     SinPlacas.disabled = False
-                    LugarOrigenPlacasDDL.disabled = True
+                    LugarOrigenPlacasDDL.disabled = False
                     NoPlaca.disabled = False
                     NoSerie.disabled = False
                     MarcaDDL.disabled = False
@@ -1226,8 +1226,6 @@ def main(page: ft.Page):
         except:
             return 0
     
-
-
 
     def marcaIdSeleccionado():
         try:
@@ -1308,6 +1306,22 @@ def main(page: ft.Page):
                     )
                 )
             )
+
+
+    def lugarOrigenPlacasDropDownList():
+        consultaSql = 'SELECT Id, UPPER(Estado) FROM Estados'
+        estados = run_query(consultaSql)
+        for row in estados:
+            LugarOrigenPlacasDDL.options.append(
+                ft.DropdownOption(
+                    key= (str(row[0])+ '- ' + row[1]),
+                    content= ft.Text(
+                        str(row[1])
+                    )                    
+                )
+            )
+
+
 
 
     def noVehiculoGet():
@@ -1613,7 +1627,7 @@ def main(page: ft.Page):
     TipoVehiculoDDL = Dropdown(label= 'TIPO DE VEHICULO', width=500, enable_filter= True, editable= True, visible= False, on_change=lambda _:tipoVehiculoSeleccionado())
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     SinPlacas = ft.Checkbox(label='NO TIENE PLACAS', visible= False, on_change=vehiculoSinPlacasCheck)
-    LugarOrigenPlacasDDL = Dropdown(label= 'ORIGEN DE LAS PLACAS', width=400, enable_filter= True, editable= True, visible= False)
+    LugarOrigenPlacasDDL = Dropdown(label= 'ORIGEN DE LAS PLACAS', width=300, enable_filter= True, editable= True, visible= False)
     NoPlaca = ft.TextField(label='PLACA', width=200, visible=False)
     NoSerie = ft.TextField(label='No. DE SERIE', width=400, visible= False)
     ColorVehIncidente = ft.TextField(label='COLOR', width=200, visible= False)
@@ -1956,6 +1970,8 @@ def main(page: ft.Page):
         tipoVehiculoDDL()
         MarcaDDL.options = []
         marcasVehiculosDropDownList()
+        LugarOrigenPlacasDDL.options = []
+        lugarOrigenPlacasDropDownList()
 
         page.add(encabezado)
         page.add(
@@ -1985,7 +2001,7 @@ def main(page: ft.Page):
                         controls=[
                             ft.Row(controls=[IdVehiculoIncidente, FolioIncidente, NoVehiculo, TipoVehiculoDDL]),
                             ft.Row(controls=[SinPlacas,LugarOrigenPlacasDDL,NoPlaca, NoSerie]),
-                            ft.Row(controls=[MarcaDDL, Linea, ModeloVehiculo]),
+                            ft.Row(controls=[MarcaDDL, Linea, ModeloVehiculo, ColorVehIncidente]),
                             ft.Row(controls=[NombreConductor, ApellidosConductor]),
                             ft.Row(controls=[ObservacionesdelVehiculo])
                         ]
