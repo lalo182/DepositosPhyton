@@ -113,8 +113,8 @@ def main(page: ft.Page):
     anchocol = 220
 
     # servidor = '10.27.1.14' # # SERVIDOR PRODUCTIVO
-    # servidor = 'DESKTOP-TO7CUU2' # SERVIDIOR DE PABLO
-    servidor = 'DESKTOP-SMKHTJB'  # SERVIDOR DE LALO
+    servidor = 'DESKTOP-TO7CUU2' # SERVIDIOR DE PABLO
+    #servidor = 'DESKTOP-SMKHTJB'  # SERVIDOR DE LALO
     basedatos = 'DepositoVehicular_DB'
     usuario = 'sa'
     claveacceso = 'Gruas$mT*$!'
@@ -138,6 +138,7 @@ def main(page: ft.Page):
                     return 0            
         except pyodbc.Error as ex:
             alerta("AVISO", f"Error al conectarse a la base de datos.\nRevise su conexión o repórtelo a soporte técnico")
+            print(ex)
 
 
     def run_queryLite(query, parameters = ()):
@@ -335,6 +336,7 @@ def main(page: ft.Page):
         opdep = find_dep(drop_depositos.value)
         if opdep != None:
             drop_depositos.options.remove(opdep)
+        #agregar deposito a lista regdep
         regdep.append(
             Deposito(color, idd,'','', nom)
         )
@@ -343,7 +345,7 @@ def main(page: ft.Page):
         mosaicos = []
         for dep in regdep:
             elemento = ft.ListTile(
-                leading=ft.Text(value=str(dep.iddep), color=ft.Colors.BLACK87),
+                leading=ft.Text(value=str(dep.iddep), color=ft.Colors.TRANSPARENT),
                 title=ft.Text(value=dep.nom),
                 trailing=ft.Container(
                     width=60,
@@ -1254,11 +1256,22 @@ def main(page: ft.Page):
 
 
     def regionDescripcion(municipioId):
+        dia = str((datetime.now()).day)
+        querydeps = 'SELECT Id, RazonSocial FROM CatDepositoVehicular WHERE RegionId=?'
         consultaSql = "SELECT RegionId FROM CatMunicipio WHERE Id = ?"
         regionId = run_query(consultaSql, (municipioId,))
-        consultaSql = "SELECT CONVERT(NVARCHAR(120), [Id]) + ') ' +  [NombreRegion] FROM [CatRegion] WHERE Id = ?"
+        consultaSql = "SELECT CONVERT(NVARCHAR(120), [Id]) + ') ' +  [NombreRegion], Id FROM [CatRegion] WHERE Id = ?"
         nombreRegion = run_query(consultaSql, (regionId[0][0],))  
         Region.value = nombreRegion[0][0]
+        DepositoDDL.options=[]
+        querydepturno = "SELECT Dep, Nombre FROM Reg_Roles WHERE act=1 AND mes=MONTH(GETDATE()) AND anio=YEAR(GETDATE()) AND regid=? and SUBSTRING(Listadia, 1,3) LIKE '%"+dia+",%' OR act=1 AND mes=MONTH(GETDATE()) AND anio=YEAR(GETDATE()) AND regid=? and Listadia LIKE '%,"+dia+",%'"
+        depturno = run_query(querydepturno, (str(nombreRegion[0][1]), str(nombreRegion[0][1],)))
+        if depturno:
+            depositosIncidentesDropDownList(querydeps,nombreRegion[0][1])
+            DepositoDDL.value = str(depturno[0][0])+'-'+depturno[0][1]
+        else:
+            DepositoDDL.key=[]
+            depositosIncidentesDropDownList(querydeps,nombreRegion[0][1])
         page.update()
 
 
@@ -1278,7 +1291,7 @@ def main(page: ft.Page):
     
 
     def municipiosIncidentesDropDownList():
-        consultaSql = 'SELECT Id, NombreRegion  FROM CatRegion WHERE Activo = 1 ORDER BY NombreRegion'
+        consultaSql = 'SELECT Id, Municipio  FROM CatMunicipio ORDER BY Municipio'
         regionesLst = run_query(consultaSql)        
         for row in regionesLst:
             MunicipioDDL.options.append(
@@ -1292,9 +1305,8 @@ def main(page: ft.Page):
         page.update()
 
 
-    def depositosIncidentesDropDownList():
-        consultaSql = 'SELECT Id, RazonSocial FROM CatDepositoVehicular WHERE Activo = 1'
-        depositosLst = run_query(consultaSql)
+    def depositosIncidentesDropDownList(consultaSql, idreg):
+        depositosLst = run_query(consultaSql,(idreg,))
         for row in depositosLst:
             DepositoDDL.options.append(
                 ft.DropdownOption(
@@ -2029,7 +2041,6 @@ def main(page: ft.Page):
         MunicipioDDL.options = []
         municipiosIncidentesDropDownList()
         DepositoDDL.options = []
-        depositosIncidentesDropDownList()
         TipoVehiculoDDL.options = []
         tipoVehiculoDDL()
         MarcaDDL.options = []
