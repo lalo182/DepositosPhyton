@@ -858,18 +858,17 @@ def main(page: ft.Page):
 
 
     def validarDatosIncidente():
-        noVehiculoGet()
-        agregarVehiculoMostrarControles()
-        # tipoIncidenteValor = tipoIncidenteSeleccionado()
-        # estatusIncidenteValor = estatusIncidenteSeleccionado()
-        # municipioDLLValor = municipioIncidenteSeleccionado()
-        # depositoDLLValor = depositoIncidenteSeleccionado()
-        # if(int(tipoIncidenteValor) > 0 and Vialidad.value.strip() != '' and Colonia.value.strip() != '' and 
-        #    Ubicacion.value.strip() != '' and int(municipioDLLValor) > 0 and int(depositoDLLValor) > 0 and int(estatusIncidenteValor) > 0):
-        #     noVehiculoGet()
-        #     agregarVehiculoMostrarControles()
-        # else:
-        #     alerta('AVISO', 'FALTAN CAMPOS POR LLENAR')
+        tipoIncidenteValor = tipoIncidenteSeleccionado()
+        estatusIncidenteValor = estatusIncidenteSeleccionado()
+        municipioDLLValor = municipioIncidenteSeleccionado()
+        depositoDLLValor = depositoIncidenteSeleccionado()
+
+        if(int(tipoIncidenteValor) > 0 and Vialidad.value.strip() != '' and Colonia.value.strip() != '' and 
+           Ubicacion.value.strip() != '' and int(municipioDLLValor) > 0 and int(depositoDLLValor) > 0 and int(estatusIncidenteValor) > 0):
+            noVehiculoGet()
+            agregarVehiculoMostrarControles()
+        else:
+            alerta('AVISO', 'FALTAN CAMPOS POR LLENAR')
 
 
     def incidenteMostrarControles():
@@ -1332,8 +1331,6 @@ def main(page: ft.Page):
                     )                    
                 )
             )
-
-
 
 
     def noVehiculoGet():
