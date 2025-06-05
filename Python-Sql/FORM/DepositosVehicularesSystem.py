@@ -36,6 +36,7 @@ class VehiculoIncidente():
         self.origenPLacasId = origenPlacasId
         self.observaciones = observaciones
 
+
 class mapa(): #objeto mapa
 
     def __init__(self, lat, lon):
@@ -150,13 +151,13 @@ def main(page: ft.Page):
 
     def tipoIncidenteDDL():
         try:
-            consultaLite = 'SELECT Id, Descripcion FROM CatTipoIncidente WHERE Activo = 1'
+            consultaLite = 'SELECT Descripcion FROM CatTipoIncidente WHERE Activo = 1'
             rows = run_queryLite(consultaLite)
             for row in rows:
                 TipoIncidenteDDL.options.append(
                     ft.DropdownOption(
-                        key= (str(row[0])+'-'+row[1]),
-                        content= ft.Text(str(row[1]))
+                        key= (str(row[0])),
+                        content= ft.Text(str(row[0]))
                     )
                 )
         except Exception as er:
@@ -165,13 +166,13 @@ def main(page: ft.Page):
 
     def estatusIncidenteDDL():
         try:
-            consultaLite = 'SELECT Id, Descripcion FROM CatEstatusIncidente WHERE Activo = 1'
+            consultaLite = 'SELECT Descripcion FROM CatEstatusIncidente WHERE Activo = 1'
             rows = run_queryLite(consultaLite)
             for row in rows:
                 EstatusIncidenteDDL.options.append(
                     ft.DropdownOption(
-                        key= (str(row[0])+'-'+row[1]),
-                        content= ft.Text(str(row[1]))
+                        key= (str(row[0])),
+                        content= ft.Text(str(row[0]))
                     )
                 )
         except Exception as er:
@@ -180,13 +181,13 @@ def main(page: ft.Page):
 
     def tipoVehiculoDDL():
         try:
-            consultaLite = 'SELECT Id, Descripcion FROM CatTipoVehiculo WHERE Activo = 1'
+            consultaLite = 'SELECT Descripcion FROM CatTipoVehiculo WHERE Activo = 1'
             rows = run_queryLite(consultaLite)
             for row in rows:
                 TipoVehiculoDDL.options.append(
                     ft.DropdownOption(
-                        key= (str(row[0])+'-'+row[1]),
-                        content= ft.Text(str(row[1]))                        
+                        key= (str(row[0])),
+                        content= ft.Text(str(row[0]))                        
                     )
                 )
         except Exception as ex:
@@ -817,7 +818,9 @@ def main(page: ft.Page):
         NoVehiculo.value = ''
         SinPlacas.value = False        
         NoPlaca.value = ''
+        Linea.value = ''
         NoSerie.value = ''
+        ColorVehIncidente.value = ''
         NombreConductor.value = ''
         ApellidosConductor.value = ''
         ModeloVehiculo.value = ''
@@ -834,8 +837,8 @@ def main(page: ft.Page):
         btnCancelarAccionForm.visible = False
         regionActivo.visible = False
         Activo.visible = False       
-        btnAgregarRegistro.text = "AGREGAR"
-        btnEditarRegistro.text = "EDITAR" 
+        # btnAgregarRegistro.text = "AGREGAR"
+        # btnEditarRegistro.text = "EDITAR" 
         FolioIncidente.visible = False
         page.update()
 
@@ -857,12 +860,21 @@ def main(page: ft.Page):
 
     def validarDatosIncidente():
         tipoIncidenteValor = tipoIncidenteSeleccionado()
+        tipoIncidenteValor = TipoIncidenteDDL.value
         estatusIncidenteValor = estatusIncidenteSeleccionado()
+        estatusIncidenteValor = EstatusIncidenteDDL.value
         municipioDLLValor = municipioIncidenteSeleccionado()
         depositoDLLValor = depositoIncidenteSeleccionado()
 
-        if(int(tipoIncidenteValor) > 0 and Vialidad.value.strip() != '' and Colonia.value.strip() != '' and 
-           Ubicacion.value.strip() != '' and int(municipioDLLValor) > 0 and int(depositoDLLValor) > 0 and int(estatusIncidenteValor) > 0):
+        # if(int(tipoIncidenteValor) > 0 and Vialidad.value.strip() != '' and Colonia.value.strip() != '' and 
+        #    Ubicacion.value.strip() != '' and int(municipioDLLValor) > 0 and int(depositoDLLValor) > 0 and int(estatusIncidenteValor) > 0):
+        if(tipoIncidenteValor.strip() != '' and 
+           Vialidad.value.strip() != '' and 
+           Colonia.value.strip() != '' and 
+           UbicacionIncidente.value.strip() != '' and 
+           int(municipioDLLValor) > 0 and 
+           int(depositoDLLValor) > 0 and 
+           estatusIncidenteValor != ''):
             noVehiculoGet()
             agregarVehiculoMostrarControles()
         else:
@@ -882,7 +894,7 @@ def main(page: ft.Page):
         DepositoDDL.visible = True
         Latitud.visible = True
         Longitud.visible = True
-        Ubicacion.visible = True
+        UbicacionIncidente.visible = True
         RespondienteNombreCompleto.visible = True
         RespondienteIdentificacion.visible = True
         NotaRespondiente.visible = True
@@ -893,6 +905,7 @@ def main(page: ft.Page):
         FolioIncidente.visible = False
         NoVehiculo.visible = False        
         TipoVehiculoDDL.visible = False
+        TipoGruaDDL.visible = False
         SinPlacas.visible = False
         LugarOrigenPlacasDDL.visible = False
         NoPlaca.visible = False
@@ -924,7 +937,7 @@ def main(page: ft.Page):
         DepositoDDL.visible = False
         Latitud.visible = False
         Longitud.visible = False
-        Ubicacion.visible = False
+        UbicacionIncidente.visible = False
         RespondienteNombreCompleto.visible = False
         RespondienteIdentificacion.visible = False
         NotaRespondiente.visible = False
@@ -935,6 +948,7 @@ def main(page: ft.Page):
         FolioIncidente.visible = False # # # SOLO SERA VISIBLE AL EDITAR
         NoVehiculo.visible = True
         TipoVehiculoDDL.visible = True
+        TipoGruaDDL.visible = True
         SinPlacas.visible = True 
         LugarOrigenPlacasDDL.visible = True       
         NoPlaca.visible = True
@@ -1187,18 +1201,18 @@ def main(page: ft.Page):
     def tipoVehiculoSeleccionado():
         try:
             textoSeleccionado = TipoVehiculoDDL.value
-            posicion = textoSeleccionado.find('-')
-            if posicion != -1:
-                valor = textoSeleccionado[:posicion]
-                print("tipoVehiculoSeleccionado:", valor)
-                if(valor == '2'):
+            if(textoSeleccionado == 'BICICLETA'):
                     SinPlacas.disabled = True
                     SinPlacas.value = False
+                    LugarOrigenPlacasDDL.options = []
+                    LugarOrigenPlacasDDL.key = []
                     LugarOrigenPlacasDDL.disabled = True
                     NoPlaca.value = ''
                     NoPlaca.disabled = True
                     NoSerie.value = ''
-                    NoSerie.disabled = True                    
+                    NoSerie.disabled = True
+                    MarcaDDL.options = []
+                    MarcaDDL.key = []
                     MarcaDDL.disabled = True
                     Linea.value = ''
                     Linea.disabled = True
@@ -1209,19 +1223,19 @@ def main(page: ft.Page):
                     ApellidosConductor.value = ''
                     ApellidosConductor.disabled = True
                     page.update()
-                if(valor != '2'):
-                    SinPlacas.disabled = False
+            if(textoSeleccionado != 'BICICLETA'):
+                    SinPlacas.disabled = False                    
                     LugarOrigenPlacasDDL.disabled = False
+                    lugarOrigenPlacasDropDownList()
                     NoPlaca.disabled = False
                     NoSerie.disabled = False
                     MarcaDDL.disabled = False
+                    marcasVehiculosDropDownList()
                     Linea.disabled = False
                     ModeloVehiculo.disabled = False
                     NombreConductor.disabled = False
                     ApellidosConductor.disabled = False
                     page.update()
-            else:
-                return 0
         except:
             return 0
     
@@ -1341,13 +1355,16 @@ def main(page: ft.Page):
 
 
     def vehiculoSinPlacasCheck(e):
-        print(e)
+        # print(e)
         if e.data == 'true':
             LugarOrigenPlacasDDL.disabled = True
             NoPlaca.disabled = True
+            LugarOrigenPlacasDDL.options = []
+            LugarOrigenPlacasDDL.key = []
         if e.data == 'false':
             LugarOrigenPlacasDDL.disabled = False
             NoPlaca.disabled = False
+            lugarOrigenPlacasDropDownList()
         page.update()
         # sinplacasVal = SinPlacas.value
         # if sinplacasVal == True:
@@ -1524,6 +1541,7 @@ def main(page: ft.Page):
         botonesAgregar()
         page.update()
 
+
     def get_coor(url):#extraccion coordenadas de enlace google maps
         
         coordenadas = [0,0]
@@ -1545,7 +1563,8 @@ def main(page: ft.Page):
                     coordenadas.append(long)
         
         return coordenadas
-    
+
+
     def abrir_mapa():
         url = Ubicacion.value
         if url!='':
@@ -1564,7 +1583,53 @@ def main(page: ft.Page):
 
 
     def incidentesAdd():
-        alerta('PRUEBA', 'CLICK EN BOTON AGREGAR INCIDENTE')        
+        alerta('PRUEBA', 'CLICK EN BOTON AGREGAR INCIDENTE')
+        tipoIncideneVal = TipoIncidenteDDL.value.strip()
+        folioIncidenteVal = FolioIncidente.value.strip()
+        fechaIncidenteVal = FechaIncidente.value.strip()
+        vialidadVal = Vialidad.value.strip()
+        coloniaVal = Colonia.value.strip()
+        referenciaUbicacionVal = Referencia.value.strip()
+        latitudVal = ''
+        longitudVal = ''
+        ubicacionIncidenteVal = UbicacionIncidente.value.strip().upper()
+        municipioIdVal = 1
+        regionIdVal = 1
+        depositoVal = 1
+        respondienteNombreVal = RespondienteNombreCompleto.value.strip().upper()
+        respondienteIdentificacionVal = RespondienteIdentificacion.value.strip().upper()
+        respondienteNotasVal = NotaRespondiente.value.strip()
+        folio911Val = Folio911.value.strip()
+        estatusIncidenteVal = ''        
+        consultaSql = '''
+                    INSERT INTO [dbo].[Incidentes]
+                ([TipoIncidente],[FolioIncidente],[FechaIncidente]
+                ,[VialidadIncidente],[ColoniaIncidente],[ReferenciaUbicacionIncidente]
+                ,[LatitudUbicacionIncidente],[LongitudUbicacionIncidente],[UbicacionIncidente]
+                ,[MunicipioId],[RegionId],[DepositoVehicularId]
+                ,[RespondienteNombreCompleto],[RespondienteIdentificacion],[RespondienteNotas]
+                ,[Folio911],[EstatusIncidente],[CreadoPor],[FechaCreacion])
+         VALUES(?, ?, ?
+               , ?, ? ,?
+               , ?, ?, ?
+               , ?, ?, ?
+               , ?, ?, ?
+               , ?, ?, 1 , GETDATE())
+            '''
+        try:
+            run_query(consultaSql, (tipoIncideneVal, folioIncidenteVal, fechaIncidenteVal,
+                                    vialidadVal, coloniaVal, referenciaUbicacionVal,
+                                    latitudVal, longitudVal, ubicacionIncidenteVal,
+                                    municipioIdVal, regionIdVal, depositoVal,
+                                    respondienteNombreVal, respondienteIdentificacionVal, respondienteNotasVal,
+                                    folio911Val, estatusIncidenteVal))                       
+            # regionesLista()
+            # limpiarControles()
+            # botonesAgregar()
+            alerta('EXITOSO', 'SE AGREGO CORRECTAMENTE EL FOLIO ' + folioIncidenteVal)
+        except Exception as ex:
+            alerta('WARNING', 'OCURRIO UN ERROR')
+        
 
 
     def incidentesUpdate():
@@ -1602,9 +1667,10 @@ def main(page: ft.Page):
     FechaIncidente = ft.TextField(label='FECHA', value= dt.datetime.now().strftime("%Y-%m-%d"), width=150)
     HoraIncidente = ft.TextField(label='HORA', value= dt.datetime.now().strftime("%H:%M"), width=100)
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-    Vialidad = ft.TextField(label='VIALIDAD', width=600) 
-    Colonia = ft.TextField(label='COLONIA', width=350)
-    Referencia = ft.TextField(label='REFERENCIA', width=500)
+    Vialidad = ft.TextField(label='VIALIDAD', width=500) 
+    Colonia = ft.TextField(label='COLONIA', width=250)
+    Referencia = ft.TextField(label='REFERENCIA', width=400)
+    UbicacionIncidente = ft.TextField(label='UBICACION (MAPS)', width=350)
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
     MunicipioDDL = Dropdown(label= 'MUNICIPIO', width=400, enable_filter= True, editable= True, on_change=lambda _:municipioIncidenteSeleccionado())
     Region = ft.TextField(label='REGIÓN', width=450, read_only=True)
@@ -1621,7 +1687,8 @@ def main(page: ft.Page):
     IdVehiculoIncidente = ft.TextField(label='Id', width= 70, read_only= True, visible= False)
     FolioIncidente = ft.TextField(label='No. FOLIO', width=200, read_only= True, visible= False)
     NoVehiculo = ft.TextField(label='No. DE VEHÍCULO', width=140, read_only= True, visible=False)
-    TipoVehiculoDDL = Dropdown(label= 'TIPO DE VEHICULO', width=500, enable_filter= True, editable= True, visible= False, on_change=lambda _:tipoVehiculoSeleccionado())
+    TipoVehiculoDDL = Dropdown(label= 'TIPO DE VEHICULO', width=500, enable_filter= True, editable= True, visible= False, on_change=lambda _: tipoVehiculoSeleccionado())
+    TipoGruaDDL = Dropdown(label= 'TIPO DE GRUA', width=200, enable_filter= True, editable= True, visible= False)
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     SinPlacas = ft.Checkbox(label='NO TIENE PLACAS', visible= False, on_change=vehiculoSinPlacasCheck)
     LugarOrigenPlacasDDL = Dropdown(label= 'ORIGEN DE LAS PLACAS', width=300, enable_filter= True, editable= True, visible= False)
@@ -1979,8 +2046,7 @@ def main(page: ft.Page):
                             ft.Column(
                                 controls=[
                                     ft.Row(controls=[IdIncidente, TipoIncidenteDDL, FechaIncidente, HoraIncidente]),
-                                    ft.Row(controls=[Vialidad, Colonia, Referencia]),
-                                    ft.Row(controls=[Latitud, Longitud, Ubicacion]),
+                                    ft.Row(controls=[Vialidad, Colonia, UbicacionIncidente, Referencia]),
                                     ft.Row(controls=[MunicipioDDL, Region, DepositoDDL]),                                    
                                     ft.Row(controls=[RespondienteNombreCompleto, RespondienteIdentificacion]),
                                     ft.Row(controls=[NotaRespondiente]),
@@ -1996,7 +2062,7 @@ def main(page: ft.Page):
                 controls=[
                     ft.Column(
                         controls=[
-                            ft.Row(controls=[IdVehiculoIncidente, FolioIncidente, NoVehiculo, TipoVehiculoDDL]),
+                            ft.Row(controls=[IdVehiculoIncidente, FolioIncidente, NoVehiculo, TipoVehiculoDDL, TipoGruaDDL]),
                             ft.Row(controls=[SinPlacas,LugarOrigenPlacasDDL,NoPlaca, NoSerie]),
                             ft.Row(controls=[MarcaDDL, Linea, ModeloVehiculo, ColorVehIncidente]),
                             ft.Row(controls=[NombreConductor, ApellidosConductor]),
