@@ -19,6 +19,11 @@ class Deposito(): # Diseñado para almacenar informacion para los depositos
             self.fef = fec_fin  
             self.nom = nombre
 
+class Inasistencia(): # Almacena reportes de inasistencia de depositos
+    def __init__(self, deposito, nota):
+        self.dep = deposito
+        self.nota = nota
+
 
 class VehiculoIncidente():
     def __init__(self, incidenteId, noVehiculo, noPlacas, noSerie, marcaId, marca, linea, modelo, 
@@ -116,8 +121,18 @@ def main(page: ft.Page):
     # servidor = 'DESKTOP-TO7CUU2' # SERVIDIOR DE PABLO
     servidor = 'DESKTOP-SMKHTJB'  # SERVIDOR DE LALO
     basedatos = 'DepositoVehicular_DB'
+<<<<<<< HEAD
     # usuario = 'sa'
     # claveacceso = 'Gruas$mT*$!'
+=======
+    usuario = 'sa'
+    claveacceso = 'Gruas$mT*$!'
+
+    ### VARIABLES FORMULARIO INCIDENTES
+    global diasm
+    diasm = []
+    inasists = []
+>>>>>>> ac9c4fa162f1dd98e16be812b91c65deffeb04d6
     
     # stringConexion = f"DRIVER={{SQL Server}}; SERVER={servidor}; DATABASE={basedatos}; UID={usuario};PWD={claveacceso}"   #  CADENA DE CONEXION
 
@@ -1261,14 +1276,16 @@ def main(page: ft.Page):
         nombreRegion = run_query(consultaSql, (regionId[0][0],))  
         Region.value = nombreRegion[0][0]
         DepositoDDL.options=[]
-        querydepturno = "SELECT Dep, Nombre FROM Reg_Roles WHERE act=1 AND mes=MONTH(GETDATE()) AND anio=YEAR(GETDATE()) AND regid=? and SUBSTRING(Listadia, 1,3) LIKE '%"+dia+",%' OR act=1 AND mes=MONTH(GETDATE()) AND anio=YEAR(GETDATE()) AND regid=? and Listadia LIKE '%,"+dia+",%'"
-        depturno = run_query(querydepturno, (str(nombreRegion[0][1]), str(nombreRegion[0][1],)))
+        querydepturno = "SELECT Dep, Nombre FROM Reg_Roles WHERE act=1 AND mes=MONTH(GETDATE()) AND anio=YEAR(GETDATE()) AND regid=? and SUBSTRING(Listadia, 1,3) LIKE '%"+dia+",%' OR act=1 AND mes=MONTH(GETDATE()) AND anio=YEAR(GETDATE()) AND regid=? and Listadia LIKE '%,"+dia+",%' OR act=1 AND mes=MONTH(GETDATE()) AND anio=YEAR(GETDATE()) AND regid=? and Listadia LIKE '%,"+dia+"%'"
+        depturno = run_query(querydepturno, (str(nombreRegion[0][1]), str(nombreRegion[0][1]), str(nombreRegion[0][1])))
         if depturno:
             depositosIncidentesDropDownList(querydeps,nombreRegion[0][1])
             DepositoDDL.value = str(depturno[0][0])+'-'+depturno[0][1]
+            CambioDDL.visible = True
         else:
             DepositoDDL.key=[]
             depositosIncidentesDropDownList(querydeps,nombreRegion[0][1])
+            CambioDDL.visible = False
         page.update()
 
 
@@ -1364,7 +1381,6 @@ def main(page: ft.Page):
 
 
     def vehiculoSinPlacasCheck(e):
-        # print(e)
         if e.data == 'true':
             LugarOrigenPlacasDDL.disabled = True
             NoPlaca.disabled = True
@@ -1374,16 +1390,78 @@ def main(page: ft.Page):
             LugarOrigenPlacasDDL.disabled = False
             NoPlaca.disabled = False
             lugarOrigenPlacasDropDownList()
+        page.update()  
+
+    def recdelete(elemento, lista): #elimina todos los elementos indicados
+        if elemento in lista:  
+            lista.remove(elemento) #elimina el primer resultado del elemento en la lista
+            recdelete(elemento, lista) #Elimina hasta que ya no exista el elemento indicado
+        return lista #devuelve la lista limpia
+    
+    def valid_lon(e, objeto):
+        if len(e.control.value) > 7:
+            objeto.disabled=False
+        else:
+            objeto.disabled=True
+        objeto.update()
+
+    def cmbdep_No(dlg): #opcion cancelar cambio deposito
+        CambioDDL.value=True
+        page.close(dlg)
         page.update()
-        # sinplacasVal = SinPlacas.value
-        # if sinplacasVal == True:
-        #     LugarOrigenPlacasDDL.disabled = True
-        #     NoPlaca.disabled = True
-        # if sinplacasVal == False:
-        #     LugarOrigenPlacasDDL.disabled = False
-        #     NoPlaca.disabled = False
-        # page.update()
+
+    def cmbdep_Si(dlg, dep): #asigna siguiente deposito en rol
+        global diasm
+        if len(diasm) == 0:
+            diasm = ['','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','']
+            queryddep = 'SELECT Dep, Listadia FROM Reg_Roles WHERE act=1 AND mes=MONTH(GETDATE()) AND anio=YEAR(GETDATE()) AND regid=?'
+            ls = (Region.value).find(')')
+            reg = Region.value[:ls]
+            listdias = run_query(queryddep,(reg))
+            for elemento in listdias:
+                dias = elemento[1].split(',')
+                for dia in dias:
+                    diasm[int(dia)-1] = elemento[0]
+            dia = (datetime.now()).day
+            diasm = recdelete('',diasm)[dia-1:]
+            diasm = recdelete(dep,diasm)
+        else:
+            diasm = recdelete(dep,diasm)
         
+        try:
+            query_depsup = 'SELECT Id, RazonSocial FROM CatDepositoVehicular WHERE Id = ?'
+            inasists.insert(0,str(Inasistencia(dep, notaCambio.value)))
+            notaCambio.value=''
+            depsup = run_query(query_depsup,(diasm[0]))
+            DepositoDDL.value = str(depsup[0][0])+'-'+depsup[0][1]
+            CambioDDL.value=True
+        except:
+            alerta('AVISO', 'No hay mas depositos disponibles')
+        page.close(dlg)
+        page.update()
+    
+    def cambioDep(e):
+        ls = (DepositoDDL.value).find('-')
+        iddep = int(DepositoDDL.value[:ls])
+        btnAceptcmb.on_click=lambda _:cmbdep_Si(dlg, iddep)
+        if e.data == 'false':
+            dlg = ft.AlertDialog(
+                modal=True,
+                title=ft.Text('AVISO'),
+                content=ft.Row(
+                    width=400,
+                    wrap=True,
+                    controls=[
+                        ft.Text('Justifique el cambio de deposito'),
+                        notaCambio,
+                        ]
+                    ),
+                actions=[
+                    btnAceptcmb,
+                    ft.TextButton("Cancelar", on_click= lambda _:cmbdep_No(dlg)),
+                ]
+            )
+            page.open(dlg)
 
     def agregarVehiculoLista():
         marcaSelected = marcaVehiculoGet()
@@ -1685,7 +1763,14 @@ def main(page: ft.Page):
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
     MunicipioDDL = Dropdown(label= 'MUNICIPIO *', width=400, enable_filter= True, editable= True, on_change=lambda _:municipioIncidenteSeleccionado())
     Region = ft.TextField(label='REGIÓN', width=450, read_only=True)
+<<<<<<< HEAD
     DepositoDDL = Dropdown(label= 'DEPOSITO *', width=650, enable_filter= True, editable= True)
+=======
+    DepositoDDL = Dropdown(label= 'DEPOSITO', width=650, enable_filter= True, editable= True)
+    CambioDDL = ft.Checkbox(label='Atendido', visible= False, on_change=cambioDep, value=True)
+    notaCambio = ft.TextField(label='Nota', width=400, on_change= lambda e:valid_lon(e,btnAceptcmb))
+    btnAceptcmb = ft.TextButton("Aceptar", disabled=True)
+>>>>>>> ac9c4fa162f1dd98e16be812b91c65deffeb04d6
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
     RespondienteNombreCompleto = ft.TextField(label='NOMBRE COMPLETO DE RESPONDIENTE *', width= 700)
     RespondienteIdentificacion = ft.TextField(label='IDENTIFICACIÓN DE RSPONDIENTE *', width= 300)
@@ -2059,7 +2144,7 @@ def main(page: ft.Page):
                                 controls=[
                                     ft.Row(controls=[IdIncidente, TipoIncidenteDDL, FechaIncidente, HoraIncidente]),
                                     ft.Row(controls=[Vialidad, Colonia, UbicacionIncidente, Referencia]),
-                                    ft.Row(controls=[MunicipioDDL, Region, DepositoDDL]),                                    
+                                    ft.Row(controls=[MunicipioDDL, Region, DepositoDDL, CambioDDL], wrap=True, width=1080),                                    
                                     ft.Row(controls=[RespondienteNombreCompleto, RespondienteIdentificacion]),
                                     ft.Row(controls=[NotaRespondiente]),
                                     ft.Row(controls=[Folio911, EstatusIncidenteDDL]),
