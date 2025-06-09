@@ -6,6 +6,7 @@ import sqlite3
 import flet_map as map
 import requests
 from bs4 import BeautifulSoup
+from geopy.geocoders import Nominatim
 
 
 from flet import *
@@ -55,31 +56,10 @@ class mapa(): #objeto mapa
             interaction_configuration=map.MapInteractionConfiguration(
                 flags=map.MapInteractiveFlag.ALL
             ),
-            on_init=lambda e: print(f"Initialized Map"),
-            on_event=lambda e: print(e),
             layers=[
                 map.TileLayer(
                     url_template="https://tile.openstreetmap.org/{z}/{x}/{y}.png",
                     on_image_error=lambda e: print("TileLayer Error"),
-                ),
-                map.RichAttribution(
-                    attributions=[
-                        map.TextSourceAttribution(
-                            text="OpenStreetMap Contributors",
-                            on_click=lambda e: e.page.launch_url(
-                                "https://openstreetmap.org/copyright"
-                            ),
-                        ),
-                        map.TextSourceAttribution(
-                            text="Flet",
-                            on_click=lambda e: e.page.launch_url("https://flet.dev"),
-                        ),
-                    ]
-                ),
-                map.SimpleAttribution(
-                    text="Flet",
-                    alignment=ft.Alignment(0.0,-1.0),
-                    on_click=lambda e: print("Clicked SimpleAttribution"),
                 ),
                 map.MarkerLayer(
                     ref=self.marker_layer,
