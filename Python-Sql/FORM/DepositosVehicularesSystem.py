@@ -26,19 +26,23 @@ class Inasistencia(): # Almacena reportes de inasistencia de depositos
 
 
 class VehiculoIncidente():
-    def __init__(self, incidenteId, noVehiculo, noPlacas, noSerie, marcaId, marca, linea, modelo, 
-                 nombreConductor, apellidosConductor, origenPlacasId, observaciones):
+    def __init__(self, incidenteId, noVehiculo, tipoVehiculo, sinPlacas, origenPlacasId,
+                 noPlacas, noSerie, marcaId, marca, linea, modelo, color,
+                 nombreConductor, apellidosConductor, observaciones):
         self.incidenteId = incidenteId
         self.noVehiculo = noVehiculo
+        self.tipoVehiculo = tipoVehiculo
+        self.sinPlacas = sinPlacas
+        self.origenPLacasId = origenPlacasId
         self.noPlacas = noPlacas
         self.noSerie = noSerie
         self.marcaId = marcaId
         self.marca = marca
         self.linea = linea
         self.modelo = modelo
+        self.color = color
         self.nombreConductor = nombreConductor
-        self.apellidosConductor = apellidosConductor
-        self.origenPLacasId = origenPlacasId
+        self.apellidosConductor = apellidosConductor        
         self.observaciones = observaciones
 
 
@@ -121,10 +125,6 @@ def main(page: ft.Page):
     # servidor = 'DESKTOP-TO7CUU2' # SERVIDIOR DE PABLO
     servidor = 'DESKTOP-SMKHTJB'  # SERVIDOR DE LALO
     basedatos = 'DepositoVehicular_DB'
-<<<<<<< HEAD
-    # usuario = 'sa'
-    # claveacceso = 'Gruas$mT*$!'
-=======
     usuario = 'sa'
     claveacceso = 'Gruas$mT*$!'
 
@@ -132,7 +132,6 @@ def main(page: ft.Page):
     global diasm
     diasm = []
     inasists = []
->>>>>>> ac9c4fa162f1dd98e16be812b91c65deffeb04d6
     
     # stringConexion = f"DRIVER={{SQL Server}}; SERVER={servidor}; DATABASE={basedatos}; UID={usuario};PWD={claveacceso}"   #  CADENA DE CONEXION
 
@@ -154,14 +153,6 @@ def main(page: ft.Page):
         except pyodbc.Error as ex:
             alerta("AVISO", f"Error al conectarse a la base de datos.\nRevise su conexión o repórtelo a soporte técnico")
             print(ex)
-
-
-    # def run_storedProcedure(procedimiento, parameters = ()):
-    #     try
-    #         with pyodbc.connect(stringConexion) as conn:
-    #             cursor = conn.cursor()
-    #             cursor.execute(procedimiento, parameters)
-    #             cursor.commit()
 
 
     def run_queryLite(query, parameters = ()):
@@ -850,6 +841,8 @@ def main(page: ft.Page):
         ApellidosConductor.value = ''
         ModeloVehiculo.value = ''
         ObservacionesdelVehiculo.value = ''
+        MarcaDDL.options = []
+        marcasVehiculosDropDownList()
         noVehiculoGet()
         page.update()
 
@@ -886,10 +879,10 @@ def main(page: ft.Page):
     def validarDatosIncidente():
         #tipoIncidenteValor = tipoIncidenteSeleccionado()
         tipoIncidenteValor = TipoIncidenteDDL.value
-        print("validarDatosIncidente:", tipoIncidenteValor)
+        #print("validarDatosIncidente:", tipoIncidenteValor)
         #estatusIncidenteValor = estatusIncidenteSeleccionado()
         estatusIncidenteValor = EstatusIncidenteDDL.value
-        print("validarDatosIncidente:", estatusIncidenteValor)
+        #print("validarDatosIncidente:", estatusIncidenteValor)
         municipioDLLValor = municipioIncidenteSeleccionado()
         depositoDLLValor = depositoIncidenteSeleccionado()
 
@@ -1174,10 +1167,10 @@ def main(page: ft.Page):
 
     def regionIncidenteSeleccionado():
         try:
-            textoSeleccionado = regionIncidenteSeleccionado.value
+            textoSeleccionado = Region.value
             posicion = textoSeleccionado.find('-')
             if posicion != -1:
-                valor = textoSeleccionado[:posicion]                
+                valor = textoSeleccionado[:posicion]
                 return valor
             else:
                 return 0
@@ -1257,6 +1250,19 @@ def main(page: ft.Page):
     def marcaIdSeleccionado():
         try:
             textoSelect = MarcaDDL.value
+            posicion = textoSelect.find('-')
+            if posicion != -1:
+                valor = textoSelect[:posicion]
+                return valor
+            else:
+                return 0
+        except:
+            return 0
+
+
+    def origenPlacasSeleccionado():
+        try:
+            textoSelect = LugarOrigenPlacasDDL.value
             posicion = textoSelect.find('-')
             if posicion != -1:
                 valor = textoSelect[:posicion]
@@ -1363,7 +1369,7 @@ def main(page: ft.Page):
 
     def noVehiculoGet():
         NoVehiculoSig = len(vehiculosInvolucrados)
-        NoVehiculo.value = str(NoVehiculoSig + 1).zfill(2)
+        NoVehiculo.value = str(NoVehiculoSig + 1).zfill(3)
         page.update()
 
 
@@ -1392,12 +1398,14 @@ def main(page: ft.Page):
             lugarOrigenPlacasDropDownList()
         page.update()  
 
+
     def recdelete(elemento, lista): #elimina todos los elementos indicados
         if elemento in lista:  
             lista.remove(elemento) #elimina el primer resultado del elemento en la lista
             recdelete(elemento, lista) #Elimina hasta que ya no exista el elemento indicado
         return lista #devuelve la lista limpia
     
+
     def valid_lon(e, objeto):
         if len(e.control.value) > 7:
             objeto.disabled=False
@@ -1405,10 +1413,12 @@ def main(page: ft.Page):
             objeto.disabled=True
         objeto.update()
 
+
     def cmbdep_No(dlg): #opcion cancelar cambio deposito
         CambioDDL.value=True
         page.close(dlg)
         page.update()
+
 
     def cmbdep_Si(dlg, dep): #asigna siguiente deposito en rol
         global diasm
@@ -1439,7 +1449,8 @@ def main(page: ft.Page):
             alerta('AVISO', 'No hay mas depositos disponibles')
         page.close(dlg)
         page.update()
-    
+
+
     def cambioDep(e):
         ls = (DepositoDDL.value).find('-')
         iddep = int(DepositoDDL.value[:ls])
@@ -1463,21 +1474,22 @@ def main(page: ft.Page):
             )
             page.open(dlg)
 
+
     def agregarVehiculoLista():
         marcaSelected = marcaVehiculoGet()
         marcaId = marcaIdSeleccionado()
+        origenPlacas = origenPlacasSeleccionado()
         vehiculosInvolucrados.append(
-            VehiculoIncidente(1, NoVehiculo.value, NoPlaca.value, NoSerie.value,
-                              marcaId, marcaSelected, Linea.value, ModeloVehiculo.value, 
-                              NombreConductor.value, ApellidosConductor.value,
-                              1, 'UNIDAD CON PLACAS DE ARIZONA')
+            VehiculoIncidente(1, NoVehiculo.value, TipoVehiculoDDL.value, SinPlacas.value, origenPlacas, 
+                            NoPlaca.value, NoSerie.value, marcaId, marcaSelected, Linea.value, ModeloVehiculo.value, ColorVehIncidente.value,
+                            NombreConductor.value, ApellidosConductor.value, ObservacionesdelVehiculo.value)
         )
         vehiculosIncidenteslv.controls.clear()  # limpiamos el listView para volverlo a llenar
         limpiarControlesVehiculosInci()  # limpiamos los controles de registro
         veh_temp = []
         for vi in vehiculosInvolucrados:
             elemento = ft.ListTile(
-                leading= ft.Text(value=str(vi.noVehiculo).zfill(2), color= ft.Colors.BLACK),
+                leading= ft.Text(value=str(vi.noVehiculo).zfill(3), color= ft.Colors.BLACK),
                 title= ft.Text(value=str(vi.marca + ' ' + vi.linea + ' ' + vi.modelo + ' ' + vi.noPlacas)),
                 trailing= ft.PopupMenuButton(
                     icon=ft.Icons.MORE_VERT,
@@ -1491,9 +1503,9 @@ def main(page: ft.Page):
             for vt in veh_temp:
                 print(vt.title)
         vehiculosIncidenteslv.controls.extend(veh_temp)
-        print(len(veh_temp))
         if len(veh_temp) > 0:            
-            btnAgregarRegistro.visible = True
+            btnAgregarRegistro.visible = True     
+        
         page.update()
 
 
@@ -1673,10 +1685,12 @@ def main(page: ft.Page):
 
 
     def incidentesAdd():        
+        ConsultaQuery = 'SELECT ISNULL(MAX([FolioIncidente]), 0) FROM [Incidentes] WHERE YEAR(FechaIncidente) = 2025'
+        folioIncidenteSigQuery = run_query(ConsultaQuery)        
+        folioSig = int(folioIncidenteSigQuery[0][0]) + 1
+        # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #        
         tipoIncideneVal = TipoIncidenteDDL.value
-        # folioIncidenteVal = 'SMT/0001' # FolioIncidente.value
-        # print("folioIncidenteVal: ", folioIncidenteVal)
-        fechaIncidenteVal = datetime.now()
+        folioIncidenteVal = str(folioSig)
         vialidadVal = Vialidad.value
         coloniaVal = Colonia.value
         referenciaUbicacionVal = Referencia.value       
@@ -1690,30 +1704,49 @@ def main(page: ft.Page):
         folio911Val = str(Folio911.value)
         estatusIncidenteVal = EstatusIncidenteDDL.value
         consultaSql = '''INSERT INTO [dbo].[Incidentes]
-                        ([TipoIncidente],[FechaIncidente]
+                        ([TipoIncidente],[FechaIncidente], [FolioIncidente]
                         ,[VialidadIncidente],[ColoniaIncidente],[ReferenciaUbicacionIncidente],[UbicacionIncidente]
                         ,[MunicipioId],[RegionId],[DepositoVehicularId]
                         ,[RespondienteNombreCompleto],[RespondienteIdentificacion],[RespondienteNotas]
                         ,[Folio911],[EstatusIncidente],[CreadoPor],[FechaCreacion],[Activo])
-                VALUES(?, GETDATE(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? , GETDATE(), ?)'''
+                VALUES(?, GETDATE(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1 , GETDATE(), 1)'''
         try:
             run_query(consultaSql, 
-                        (tipoIncideneVal,
+                        (tipoIncideneVal, folioIncidenteVal,
                         vialidadVal, coloniaVal, referenciaUbicacionVal, ubicacionIncidenteVal,
                         municipioIdVal, regionIdVal, depositoVal,
                         respondienteNombreVal, respondienteIdentificacionVal, respondienteNotasVal,
-                        folio911Val, estatusIncidenteVal, 1, 1))
-            
+                        folio911Val, estatusIncidenteVal,))            
             consultaSqlIdInciedente = 'SELECT MAX(Id) AS Id FROM Incidentes'
             res = run_query(consultaSqlIdInciedente)
             IdIncidente = res[0][0]
+            guardados = 0
             if (int(IdIncidente) > 0):
-                print("IdIncidente:", str(IdIncidente))
+                for vi in vehiculosInvolucrados:
+                    insertVehiculosInvolucradosQuery = '''
+                    INSERT INTO [dbo].[IncidenteVehiculos]
+                            ([IncidenteId],[NumeroVehiculo],[TipoVehiculo]
+		                    ,[SinPlacas],[LugarOrigenPlacas],[NumeroPlaca]
+                            ,[NumeroSerie],[MarcaId],[LineaVehiculo]
+                            ,[ModeloVehiculo],[Color],[NombresConductor]
+                            ,[ApellidosConductor],[ObservacionesVehiculo]
+                            ,[CreadoPor],[FechaCreacion],[Activo])
+                    VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ,?, ?, 1, GETDATE(), 1)'''
+                    run_query(insertVehiculosInvolucradosQuery,
+                              (IdIncidente, vi.noVehiculo, vi.tipoVehiculo,
+                               vi.sinPlacas, vi.origenPLacasId, vi.noPlacas,
+                               vi.noSerie, vi.marcaId, vi.linea,
+                               vi.modelo, vi.color, vi.nombreConductor,
+                               vi.apellidosConductor, vi.observaciones))
+                    guardados += 1
+                
+                vehiculosCount = int(len(vehiculosInvolucrados))
+                if guardados == vehiculosCount:
+                    alerta('AVISO', 'SE REGISTRARON ' + str(guardados) + ' VEHICULO(S) CORRECTAMENTE')
+
                 # regionesLista()
                 limpiarControles()
                 botonesAgregar()
-                alerta('AVISO', 'SE AGREGO CORRECTAMENTE EL INCIDENTE')
-                print(len(vehiculosInvolucrados))
                 # RECORRER PARA GUARDAR LOS ELEMENTOS DE LA LISTA DE VEHICULOS INVOLUCRADOS
             else:
                 alerta('ALERTA', 'OCURRIO UN ERROR AL GUARDAR EL INCIDENTE, INFORME AL RESPONSABLE DEL SISTEMA')            
@@ -1721,8 +1754,11 @@ def main(page: ft.Page):
             alerta('ADVERTENCIA', 'OCURRIO UN ERROR')
             print(f"{ex}")
 
+
     def incidentesUpdate():
         alerta('PRUEBA', 'CLICK EN BOTON ACTUALIZAR INCIDENTE')
+
+
 
     # CONTROLES PARA EL FORMULARIO DE REGIONES
     regionId = ft.TextField(label='Id', width=70, read_only=True, height= 35, text_size=12)
@@ -1763,14 +1799,10 @@ def main(page: ft.Page):
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
     MunicipioDDL = Dropdown(label= 'MUNICIPIO *', width=400, enable_filter= True, editable= True, on_change=lambda _:municipioIncidenteSeleccionado())
     Region = ft.TextField(label='REGIÓN', width=450, read_only=True)
-<<<<<<< HEAD
-    DepositoDDL = Dropdown(label= 'DEPOSITO *', width=650, enable_filter= True, editable= True)
-=======
     DepositoDDL = Dropdown(label= 'DEPOSITO', width=650, enable_filter= True, editable= True)
     CambioDDL = ft.Checkbox(label='Atendido', visible= False, on_change=cambioDep, value=True)
     notaCambio = ft.TextField(label='Nota', width=400, on_change= lambda e:valid_lon(e,btnAceptcmb))
     btnAceptcmb = ft.TextButton("Aceptar", disabled=True)
->>>>>>> ac9c4fa162f1dd98e16be812b91c65deffeb04d6
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
     RespondienteNombreCompleto = ft.TextField(label='NOMBRE COMPLETO DE RESPONDIENTE *', width= 700)
     RespondienteIdentificacion = ft.TextField(label='IDENTIFICACIÓN DE RSPONDIENTE *', width= 300)
@@ -1818,7 +1850,8 @@ def main(page: ft.Page):
                     boundary_margin=ft.Margin(10,10,10,10),
                     content=ft.Text('')
                 )
-    
+
+
     bs = ft.BottomSheet(
         ft.Container(
                     width=900,
@@ -1827,7 +1860,8 @@ def main(page: ft.Page):
                 ),
         open=False,
     )
-    
+
+
     btn_map = ft.ElevatedButton("Ver ubicacion", on_click= lambda _:abrir_mapa())
 
 
@@ -2110,7 +2144,6 @@ def main(page: ft.Page):
     def show_Incidentes():
         page.controls.clear()
         encabezado = ft.Text('REGISTRO DE INCIDENTES', size= 30)
-
         btnAgregarRegistro.on_click = lambda _:incidentesAdd()  
         btnAgregarRegistro.visible = False      
         btnEditarRegistro.on_click = lambda _:incidentesUpdate()
