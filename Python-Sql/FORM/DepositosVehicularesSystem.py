@@ -1250,10 +1250,12 @@ def main(page: ft.Page):
             if(textoSeleccionado != 'BICICLETA'):
                     SinPlacas.disabled = False                    
                     LugarOrigenPlacasDDL.disabled = False
+                    LugarOrigenPlacasDDL.options= []
                     lugarOrigenPlacasDropDownList()
                     NoPlaca.disabled = False
                     NoSerie.disabled = False
                     MarcaDDL.disabled = False
+                    MarcaDDL.options = []
                     marcasVehiculosDropDownList()
                     Linea.disabled = False
                     ModeloVehiculo.disabled = False
