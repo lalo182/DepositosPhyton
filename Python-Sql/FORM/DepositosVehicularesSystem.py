@@ -27,12 +27,13 @@ class Inasistencia(): # Almacena reportes de inasistencia de depositos
 
 
 class VehiculoIncidente():
-    def __init__(self, incidenteId, noVehiculo, tipoVehiculo, sinPlacas, origenPlacasId,
+    def __init__(self, incidenteId, noVehiculo, tipoVehiculo, tipoGrua, sinPlacas, origenPlacasId,
                  noPlacas, noSerie, marcaId, marca, linea, modelo, color,
                  nombreConductor, apellidosConductor, observaciones):
         self.incidenteId = incidenteId
         self.noVehiculo = noVehiculo
         self.tipoVehiculo = tipoVehiculo
+        self.tipoGrua = tipoGrua
         self.sinPlacas = sinPlacas
         self.origenPLacasId = origenPlacasId
         self.noPlacas = noPlacas
@@ -102,8 +103,8 @@ def main(page: ft.Page):
     anchocol = 220
 
     # servidor = '10.27.1.14' # # SERVIDOR PRODUCTIVO
-    servidor = 'DESKTOP-TO7CUU2' # SERVIDIOR DE PABLO
-    # servidor = 'DESKTOP-SMKHTJB'  # SERVIDOR DE LALO
+    # servidor = 'DESKTOP-TO7CUU2' # SERVIDIOR DE PABLO
+    servidor = 'DESKTOP-SMKHTJB'  # SERVIDOR DE LALO
     basedatos = 'DepositoVehicular_DB'
     usuario = 'sa'
     claveacceso = 'Gruas$mT*$!'
@@ -189,6 +190,22 @@ def main(page: ft.Page):
                 )
         except Exception as ex:
             alerta("Error:", ex)
+
+
+    def tipoGruaDDL():
+        try:
+            consultaLite = 'SELECT Descripcion FROM CatTipoGrua'
+            rows = run_queryLite(consultaLite)
+            for row in rows:
+                TipoGruaDDL.options.append(
+                    ft.DropdownOption(
+                        key= (str(row[0])),
+                        content= ft.Text(str(row[0]))
+                    )
+                )
+            TipoGruaDDL.value = "TIPO A"
+        except Exception as er:
+            print("Error: ", er)
 
 
     def alerta(titulo, mensaje):
@@ -1172,6 +1189,22 @@ def main(page: ft.Page):
                 return 0
         except:
             return 0
+        
+
+    def anioGetSeleccionado():
+        try:
+            # print(FechaIncidente.value)
+            textoSeleccionado = FechaIncidente.value
+            posicion = textoSeleccionado.find('-')
+            # print(posicion)
+            if posicion != -1:
+                valor = textoSeleccionado[:posicion]
+                # print(valor)
+                return valor
+            else:
+                return 0
+        except:
+            return 0
 
     
     def depositoIncidenteSeleccionado():
@@ -1494,12 +1527,22 @@ def main(page: ft.Page):
         marcaSelected = marcaVehiculoGet()
         marcaId = marcaIdSeleccionado()
         origenPlacas = origenPlacasSeleccionado()
+        if TipoVehiculoDDL.value == "BICICLETA":
+            TipoGruaDDL.value = 'N/A'
+            NoPlaca.value = 'N/A'
+            NoSerie.value = 'N/A'
+            marcaId = 0
+            Linea.value = 'N/A'
+            ModeloVehiculo.value = 'N/A'
+            ColorVehIncidente.value = 'N/A'
+
         vehiculosInvolucrados.append(
-            VehiculoIncidente(1, NoVehiculo.value, TipoVehiculoDDL.value, SinPlacas.value, origenPlacas, 
+            VehiculoIncidente(1, NoVehiculo.value, TipoVehiculoDDL.value, TipoGruaDDL.value,  SinPlacas.value, origenPlacas, 
                             NoPlaca.value, NoSerie.value, marcaId, marcaSelected, Linea.value, ModeloVehiculo.value, ColorVehIncidente.value,
                             NombreConductor.value, ApellidosConductor.value, ObservacionesdelVehiculo.value)
         )
         vehiculosIncidenteslv.controls.clear()  # limpiamos el listView para volverlo a llenar
+        
         limpiarControlesVehiculosInci()  # limpiamos los controles de registro
         veh_temp = []
         for vi in vehiculosInvolucrados:
@@ -1699,9 +1742,10 @@ def main(page: ft.Page):
             alerta('AVISO', 'No hay ubicacion disponible')
 
 
-    def incidentesAdd():        
-        ConsultaQuery = 'SELECT ISNULL(MAX([FolioIncidente]), 0) FROM [Incidentes] WHERE YEAR(FechaIncidente) = 2025'
-        folioIncidenteSigQuery = run_query(ConsultaQuery)        
+    def incidentesAdd():
+        anio = anioGetSeleccionado()        
+        ConsultaQuery = 'SELECT ISNULL(MAX([FolioIncidente]), 0) FROM [Incidentes] WHERE YEAR(FechaIncidente) = ?'
+        folioIncidenteSigQuery = run_query(ConsultaQuery, (int(anio),))
         folioSig = int(folioIncidenteSigQuery[0][0]) + 1
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #        
         tipoIncideneVal = TipoIncidenteDDL.value
@@ -1740,15 +1784,15 @@ def main(page: ft.Page):
                 for vi in vehiculosInvolucrados:
                     insertVehiculosInvolucradosQuery = '''
                     INSERT INTO [dbo].[IncidenteVehiculos]
-                            ([IncidenteId],[NumeroVehiculo],[TipoVehiculo]
+                            ([IncidenteId],[NumeroVehiculo],[TipoVehiculo],[TipoGrua]
 		                    ,[SinPlacas],[LugarOrigenPlacas],[NumeroPlaca]
                             ,[NumeroSerie],[MarcaId],[LineaVehiculo]
                             ,[ModeloVehiculo],[Color],[NombresConductor]
                             ,[ApellidosConductor],[ObservacionesVehiculo]
                             ,[CreadoPor],[FechaCreacion],[Activo])
-                    VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ,?, ?, 1, GETDATE(), 1)'''
+                    VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ,?, ?, 1, GETDATE(), 1)'''
                     run_query(insertVehiculosInvolucradosQuery,
-                              (IdIncidente, vi.noVehiculo, vi.tipoVehiculo,
+                              (IdIncidente, vi.noVehiculo, vi.tipoVehiculo, vi.tipoGrua,
                                vi.sinPlacas, vi.origenPLacasId, vi.noPlacas,
                                vi.noSerie, vi.marcaId, vi.linea,
                                vi.modelo, vi.color, vi.nombreConductor,
@@ -2178,10 +2222,12 @@ def main(page: ft.Page):
         DepositoDDL.options = []
         TipoVehiculoDDL.options = []
         tipoVehiculoDDL()
+        # TipoGruaDDL.options = []
+        tipoGruaDDL()
         MarcaDDL.options = []
         marcasVehiculosDropDownList()
         LugarOrigenPlacasDDL.options = []
-        lugarOrigenPlacasDropDownList()
+        lugarOrigenPlacasDropDownList()       
 
         page.add(encabezado)
         page.add(
@@ -2244,17 +2290,17 @@ def main(page: ft.Page):
         selected_index= 0,
         on_change= on_navigation_change,
         destinations= [
-            ft.NavigationBarDestination(icon= ft.Icons.APP_REGISTRATION, label= 'Catálogo de Regiones', bgcolor = ft.Colors.GREEN_400),
-            ft.NavigationBarDestination(icon= ft.Icons.ACCOUNT_TREE, label= 'Catálogo de Municipios', bgcolor = ft.Colors.GREEN_400),
-            ft.NavigationBarDestination(icon= ft.Icons.ADD_BUSINESS, label= 'Catálogo de Depositos', bgcolor = ft.Colors.GREEN_400),
-            ft.NavigationBarDestination(icon= ft.Icons.ACCESS_TIME_FILLED_ROUNDED, label= 'Roles de Depositos'),
+            ft.NavigationBarDestination(icon= ft.Icons.APP_REGISTRATION, label= 'Catálogo de Regiones', selected_icon=ft.Icons.APP_REGISTRATION_OUTLINED),
+            ft.NavigationBarDestination(icon= ft.Icons.ACCOUNT_TREE, label= 'Catálogo de Municipios', selected_icon= ft.Icons.ACCOUNT_TREE_OUTLINED),
+            ft.NavigationBarDestination(icon= ft.Icons.ADD_BUSINESS, label= 'Catálogo de Depositos', selected_icon= ft.Icons.ADD_BUSINESS_OUTLINED),
+            ft.NavigationBarDestination(icon= ft.Icons.ACCESS_TIME_FILLED, label= 'Roles de Depositos', selected_icon=ft.Icons.ACCESS_TIME_FILLED_OUTLINED),
             ft.NavigationBarDestination(icon= ft.Icons.INFO_SHARP, label= 'Sanciones Depositos'),  # ACCOUNT_BOX, label= 'Sanciones Depositos')  # ADD_CARD_OUTLINED   # ADD_COMMENT
-            ft.NavigationBarDestination(icon= ft.Icons.COMMUTE, label= 'Incidentes')
+            ft.NavigationBarDestination(icon= ft.Icons.COMMUTE, label= 'Incidentes', selected_icon= ft.Icons.COMMUTE_OUTLINED)
         ],
-        bgcolor= '#5F1B2D', #.LIGHT_BLUE_800,
-        indicator_color= ft.Colors.LIGHT_BLUE_800,  # .AMBER_400
-        overlay_color=  ft.Colors.RED_50,
-        surface_tint_color= ft.Colors.BLUE_GREY_300
+        bgcolor= '#F5F5F5', #.LIGHT_BLUE_800,
+        indicator_color= '#5F1B2D', #  ft.Colors.LIGHT_BLUE_800,  # .AMBER_400        
+        overlay_color=  ft.Colors.AMBER_400,
+
     )
 
 
