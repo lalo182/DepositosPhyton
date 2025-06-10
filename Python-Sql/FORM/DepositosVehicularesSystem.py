@@ -102,8 +102,8 @@ def main(page: ft.Page):
     anchocol = 220
 
     # servidor = '10.27.1.14' # # SERVIDOR PRODUCTIVO
-    # servidor = 'DESKTOP-TO7CUU2' # SERVIDIOR DE PABLO
-    servidor = 'DESKTOP-SMKHTJB'  # SERVIDOR DE LALO
+    servidor = 'DESKTOP-TO7CUU2' # SERVIDIOR DE PABLO
+    # servidor = 'DESKTOP-SMKHTJB'  # SERVIDOR DE LALO
     basedatos = 'DepositoVehicular_DB'
     usuario = 'sa'
     claveacceso = 'Gruas$mT*$!'
@@ -1454,6 +1454,38 @@ def main(page: ft.Page):
             )
             page.open(dlg)
 
+    def busca_infoub():
+        try:
+            if UbicacionIncidente.value != '':
+                url = UbicacionIncidente.value
+                coord = get_coor(url)
+                geolocator = Nominatim(user_agent="App_mapa_prueba")
+                location = geolocator.reverse(str(coord[0])+','+str(coord[1]))
+                try:
+                    municipio = (location.raw['address'])['county']
+                    if municipio == 'Municipio de Puebla':
+                        municipio = 'Puebla'
+                except KeyError:
+                    municipio = (location.raw['address'])['town']
+
+                try:
+                    calle = (location.raw['address'])['road']
+                except KeyError:
+                    calle = ''
+
+                querymun = "SELECT Id, Municipio FROM CatMunicipio WHERE Municipio LIKE '%"+municipio+"%'"
+                mun = run_query(querymun)
+                if len(mun)!=0:
+                    MunicipioDDL.value = str(mun[0][0])+'- '+mun[0][1]
+                    municipioIncidenteSeleccionado()
+                    Vialidad.value = calle
+                    page.update()
+                else:
+                    alerta('AVISO', 'Sin informacion del sitio')
+        except:
+            alerta('AVISO', 'Revisa tu conexion a internet o intenta con otro enlace')
+
+
 
     def agregarVehiculoLista():
         marcaSelected = marcaVehiculoGet()
@@ -1776,6 +1808,7 @@ def main(page: ft.Page):
     Colonia = ft.TextField(label='COLONIA *', width=250)
     Referencia = ft.TextField(label='REFERENCIA', width=400)
     UbicacionIncidente = ft.TextField(label='UBICACION (MAPS) *', width=350)
+    btn_buscaub = ft.ElevatedButton("Buscar Info", on_click= lambda _:busca_infoub())
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
     MunicipioDDL = Dropdown(label= 'MUNICIPIO *', width=400, enable_filter= True, editable= True, on_change=lambda _:municipioIncidenteSeleccionado())
     Region = ft.TextField(label='REGIÓN', width=450, read_only=True)
@@ -2156,8 +2189,8 @@ def main(page: ft.Page):
                             ft.Column(
                                 controls=[
                                     ft.Row(controls=[IdIncidente, TipoIncidenteDDL, FechaIncidente, HoraIncidente]),
-                                    ft.Row(controls=[Vialidad, Colonia, UbicacionIncidente, Referencia]),
-                                    ft.Row(controls=[MunicipioDDL, Region, DepositoDDL, CambioDDL], wrap=True, width=1080),                                    
+                                    ft.Row(controls=[Vialidad, Colonia, UbicacionIncidente, btn_buscaub, Referencia],wrap=True, width=1280),
+                                    ft.Row(controls=[MunicipioDDL, Region, DepositoDDL, CambioDDL], wrap=True, width=1280),                                    
                                     ft.Row(controls=[RespondienteNombreCompleto, RespondienteIdentificacion]),
                                     ft.Row(controls=[NotaRespondiente]),
                                     ft.Row(controls=[Folio911, EstatusIncidenteDDL]),
