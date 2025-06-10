@@ -175,6 +175,7 @@ def main(page: ft.Page):
                         content= ft.Text(str(row[0]))
                     )
                 )
+            TipoIncidenteDDL.value = "FALTA ADMINISTRATIVA"
         except Exception as er:
             print("Error: ", er)
 
@@ -190,6 +191,7 @@ def main(page: ft.Page):
                         content= ft.Text(str(row[0]))
                     )
                 )
+            EstatusIncidenteDDL.value = "EN ARRIBO"
         except Exception as er:
             print("Error: ", er)
     
@@ -1365,6 +1367,7 @@ def main(page: ft.Page):
                     )                    
                 )
             )
+        LugarOrigenPlacasDDL.value = "21- PUEBLA"
 
 
     def noVehiculoGet():
@@ -2228,16 +2231,17 @@ def main(page: ft.Page):
         selected_index= 0,
         on_change= on_navigation_change,
         destinations= [
-            ft.NavigationBarDestination(icon= ft.Icons.APP_REGISTRATION, label= 'Catálogo de Regiones'),
-            ft.NavigationBarDestination(icon= ft.Icons.ACCOUNT_TREE, label= 'Catálogo de Municipios'),
-            ft.NavigationBarDestination(icon= ft.Icons.ADD_BUSINESS, label= 'Catálogo de Depositos'),
+            ft.NavigationBarDestination(icon= ft.Icons.APP_REGISTRATION, label= 'Catálogo de Regiones', bgcolor = ft.Colors.GREEN_400),
+            ft.NavigationBarDestination(icon= ft.Icons.ACCOUNT_TREE, label= 'Catálogo de Municipios', bgcolor = ft.Colors.GREEN_400),
+            ft.NavigationBarDestination(icon= ft.Icons.ADD_BUSINESS, label= 'Catálogo de Depositos', bgcolor = ft.Colors.GREEN_400),
             ft.NavigationBarDestination(icon= ft.Icons.ACCESS_TIME_FILLED_ROUNDED, label= 'Roles de Depositos'),
             ft.NavigationBarDestination(icon= ft.Icons.INFO_SHARP, label= 'Sanciones Depositos'),  # ACCOUNT_BOX, label= 'Sanciones Depositos')  # ADD_CARD_OUTLINED   # ADD_COMMENT
-            ft.NavigationBarDestination(icon= ft.Icons.PARK_OUTLINED, label= 'Incidentes')
+            ft.NavigationBarDestination(icon= ft.Icons.COMMUTE, label= 'Incidentes')
         ],
-        bgcolor= ft.Colors.LIGHT_BLUE_800,
-        indicator_color= ft.Colors.GREEN_400,
-        overlay_color= ft.Colors.AMBER_400
+        bgcolor= '#5F1B2D', #.LIGHT_BLUE_800,
+        indicator_color= ft.Colors.LIGHT_BLUE_800,  # .AMBER_400
+        overlay_color=  ft.Colors.RED_50,
+        surface_tint_color= ft.Colors.BLUE_GREY_300
     )
 
 
