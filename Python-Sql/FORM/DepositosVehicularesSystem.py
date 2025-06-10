@@ -85,6 +85,8 @@ class mapa(): #objeto mapa
 
 def main(page: ft.Page):
     page.theme_mode = ft.ThemeMode.LIGHT
+    page.theme = ft.Theme(navigation_bar_theme=ft.NavigationBarTheme(bgcolor='#5F1B2D', label_text_style= ft.TextStyle(color=ft.Colors.WHITE)))
+    
     # page.bgcolor = ft.Colors.LIGHT_BLUE_100 # ft.Colors.BLUE_GREY_800
     page.title = 'DEPOSITOS VEHICULARES'
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
@@ -2290,17 +2292,16 @@ def main(page: ft.Page):
         selected_index= 0,
         on_change= on_navigation_change,
         destinations= [
-            ft.NavigationBarDestination(icon= ft.Icons.APP_REGISTRATION, label= 'Catálogo de Regiones', selected_icon=ft.Icons.APP_REGISTRATION_OUTLINED),
-            ft.NavigationBarDestination(icon= ft.Icons.ACCOUNT_TREE, label= 'Catálogo de Municipios', selected_icon= ft.Icons.ACCOUNT_TREE_OUTLINED),
-            ft.NavigationBarDestination(icon= ft.Icons.ADD_BUSINESS, label= 'Catálogo de Depositos', selected_icon= ft.Icons.ADD_BUSINESS_OUTLINED),
-            ft.NavigationBarDestination(icon= ft.Icons.ACCESS_TIME_FILLED, label= 'Roles de Depositos', selected_icon=ft.Icons.ACCESS_TIME_FILLED_OUTLINED),
-            ft.NavigationBarDestination(icon= ft.Icons.INFO_SHARP, label= 'Sanciones Depositos'),  # ACCOUNT_BOX, label= 'Sanciones Depositos')  # ADD_CARD_OUTLINED   # ADD_COMMENT
-            ft.NavigationBarDestination(icon= ft.Icons.COMMUTE, label= 'Incidentes', selected_icon= ft.Icons.COMMUTE_OUTLINED)
+            ft.NavigationBarDestination(icon= ft.Icon(name=ft.Icons.APP_REGISTRATION, color=ft.Colors.WHITE), label='Catálogo de Regiones'),
+            ft.NavigationBarDestination(icon= ft.Icon(name=ft.Icons.ACCOUNT_TREE, color=ft.Colors.WHITE), label= 'Catálogo de Municipios', bgcolor = ft.Colors.BLACK),
+            ft.NavigationBarDestination(icon= ft.Icon(name=ft.Icons.ADD_BUSINESS, color=ft.Colors.WHITE), label= 'Catálogo de Depositos', bgcolor = ft.Colors.GREEN_400),
+            ft.NavigationBarDestination(icon= ft.Icon(name=ft.Icons.ACCESS_TIME_FILLED_ROUNDED, color=ft.Colors.WHITE), label= 'Roles de Depositos'),
+            ft.NavigationBarDestination(icon= ft.Icon(name=ft.Icons.INFO_SHARP, color=ft.Colors.WHITE), label= 'Sanciones Depositos'),  # ACCOUNT_BOX, label= 'Sanciones Depositos')  # ADD_CARD_OUTLINED   # ADD_COMMENT
+            ft.NavigationBarDestination(icon= ft.Icon(name=ft.Icons.COMMUTE, color=ft.Colors.WHITE), label= 'Incidentes')
         ],
-        bgcolor= '#F5F5F5', #.LIGHT_BLUE_800,
-        indicator_color= '#5F1B2D', #  ft.Colors.LIGHT_BLUE_800,  # .AMBER_400        
-        overlay_color=  ft.Colors.AMBER_400,
-
+        bgcolor= '#5F1B2D', 
+        indicator_color= '#c4436f',
+        animation_duration=1
     )
 
 
