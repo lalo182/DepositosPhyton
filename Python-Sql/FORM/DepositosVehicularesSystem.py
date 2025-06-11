@@ -878,17 +878,11 @@ def main(page: ft.Page):
 
 
     def validarDatosIncidente():
-        #tipoIncidenteValor = tipoIncidenteSeleccionado()
         tipoIncidenteValor = TipoIncidenteDDL.value
-        #print("validarDatosIncidente:", tipoIncidenteValor)
-        #estatusIncidenteValor = estatusIncidenteSeleccionado()
         estatusIncidenteValor = EstatusIncidenteDDL.value
-        #print("validarDatosIncidente:", estatusIncidenteValor)
         municipioDLLValor = municipioIncidenteSeleccionado()
         depositoDLLValor = depositoIncidenteSeleccionado()
-
-        # if(int(tipoIncidenteValor) > 0 and Vialidad.value.strip() != '' and Colonia.value.strip() != '' and 
-        #    Ubicacion.value.strip() != '' and int(municipioDLLValor) > 0 and int(depositoDLLValor) > 0 and int(estatusIncidenteValor) > 0):
+        
         if(tipoIncidenteValor.strip() != '' and 
            Vialidad.value.strip() != '' and 
            Colonia.value.strip() != '' and 
@@ -911,6 +905,8 @@ def main(page: ft.Page):
         Colonia.visible = True
         Referencia.visible = True
         MunicipioDDL.visible = True
+        CambioDDL.visible = True
+        btn_buscaub.visible = True
         Region.visible = True
         DepositoDDL.visible = True
         Latitud.visible = True
@@ -955,6 +951,8 @@ def main(page: ft.Page):
         Referencia.visible = False
         MunicipioDDL.visible = False
         Region.visible = False
+        CambioDDL.visible = False
+        btn_buscaub.visible = False
         DepositoDDL.visible = False
         Latitud.visible = False
         Longitud.visible = False
@@ -1494,6 +1492,7 @@ def main(page: ft.Page):
             )
             page.open(dlg)
 
+
     def busca_infoub():
         try:
             if UbicacionIncidente.value != '':
@@ -1524,7 +1523,6 @@ def main(page: ft.Page):
                     alerta('AVISO', 'Sin informacion del sitio')
         except:
             alerta('AVISO', 'Revisa tu conexion a internet o intenta con otro enlace')
-
 
 
     def agregarVehiculoLista():
