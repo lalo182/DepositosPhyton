@@ -20,6 +20,7 @@ class Deposito(): # Diseñado para almacenar informacion para los depositos
             self.fef = fec_fin  
             self.nom = nombre
 
+
 class Inasistencia(): # Almacena reportes de inasistencia de depositos
     def __init__(self, deposito, nota):
         self.dep = deposito
@@ -27,15 +28,16 @@ class Inasistencia(): # Almacena reportes de inasistencia de depositos
 
 
 class VehiculoIncidente():
-    def __init__(self, incidenteId, noVehiculo, tipoVehiculo, tipoGrua, sinPlacas, origenPlacasId,
-                 noPlacas, noSerie, marcaId, marca, linea, modelo, color,
-                 nombreConductor, apellidosConductor, observaciones):
+    def __init__(self, incidenteId, noVehiculo, tipoVehiculo, tipoGrua, sinPlacas, 
+                 origenPlacasId, origenPlacasNombre, noPlacas, noSerie, marcaId, 
+                 marca, linea, modelo, color, nombreConductor, apellidosConductor, observaciones):
         self.incidenteId = incidenteId
         self.noVehiculo = noVehiculo
         self.tipoVehiculo = tipoVehiculo
         self.tipoGrua = tipoGrua
         self.sinPlacas = sinPlacas
-        self.origenPLacasId = origenPlacasId
+        self.origenPlacasId = origenPlacasId
+        self.origenPlacasNombre = origenPlacasNombre
         self.noPlacas = noPlacas
         self.noSerie = noSerie
         self.marcaId = marcaId
@@ -47,6 +49,26 @@ class VehiculoIncidente():
         self.apellidosConductor = apellidosConductor        
         self.observaciones = observaciones
 
+    def actualizarDatos(self, tipoVN, tipoGruaN, sinPlacasN, origenPlacasIdN, 
+                        origenPlacasNombreN, noPlacasN, noSerieN,
+                        marcaIdN, marcaN, lineaN, modeloN, colorN,
+                         nombreConductorN, apellidosConductorN, observacionesN,):
+        self.tipoVehiculo = tipoVN
+        self.tipoGrua = tipoGruaN
+        self.sinPlacas = sinPlacasN
+        self.origenPlacasId = origenPlacasIdN
+        self.origenPlacasNombre = origenPlacasNombreN
+        self.noPlacas = noPlacasN
+        self.noSerie = noSerieN
+        self.marcaId = marcaIdN
+        self.marca = marcaN
+        self.linea = lineaN
+        self.modelo = modeloN
+        self.color = colorN
+        self.nombreConductor = nombreConductorN
+        self.apellidosConductor = apellidosConductorN
+        self.observaciones = observacionesN
+        
 
 class mapa(): #objeto mapa
 
@@ -105,8 +127,8 @@ def main(page: ft.Page):
     anchocol = 220
 
     # servidor = '10.27.1.14' # # SERVIDOR PRODUCTIVO
-    servidor = 'DESKTOP-TO7CUU2' # SERVIDIOR DE PABLO
-    #servidor = 'DESKTOP-SMKHTJB'  # SERVIDOR DE LALO
+    # servidor = 'DESKTOP-TO7CUU2' # SERVIDIOR DE PABLO
+    servidor = 'DESKTOP-SMKHTJB'  # SERVIDOR DE LALO
     basedatos = 'DepositoVehicular_DB'
     usuario = 'sa'
     claveacceso = 'Gruas$mT*$!'
@@ -190,6 +212,7 @@ def main(page: ft.Page):
                         content= ft.Text(str(row[0]))                        
                     )
                 )
+            TipoVehiculoDDL.value = 'AUTOBUS'
         except Exception as ex:
             alerta("Error:", ex)
 
@@ -294,6 +317,54 @@ def main(page: ft.Page):
                 rehabilita_dias(dep.color, select_day) #rehabilita contenedores bloqueados de rango
                 colors.append(dep.color)
                 regdep.remove(dep)
+        page.update()
+
+
+    def editar_vehiculo(e):
+        ref = (e.control.parent).parent
+        idd = int(ref.leading.value)
+        # print(idd)
+        if idd > 0:
+            for vehiculo in vehiculosInvolucrados:
+                # print(vehiculo.noVehiculo)
+                if int(vehiculo.noVehiculo) == idd:
+                    NoVehiculo.value = vehiculo.noVehiculo
+                    TipoVehiculoDDL.value = vehiculo.tipoVehiculo
+                    TipoGruaDDL.value = vehiculo.tipoGrua
+                    SinPlacas.value = vehiculo.sinPlacas
+                    print(str(vehiculo.origenPlacasId) + str(vehiculo.origenPlacasNombre))
+                    LugarOrigenPlacasDDL.value = str(vehiculo.origenPlacasId) + str(vehiculo.origenPlacasNombre)            
+                    NoPlaca.value = vehiculo.noPlacas
+                    NoSerie.value = vehiculo.noSerie
+                    print(str(vehiculo.marcaId) + '- '+str(vehiculo.marca))
+                    MarcaDDL.value = str(vehiculo.marcaId) + '-'+str(vehiculo.marca)                    
+                    Linea.value = vehiculo.linea
+                    ModeloVehiculo.value = vehiculo.modelo
+                    ColorVehIncidente.value = vehiculo.color
+                    NombreConductor.value = vehiculo.nombreConductor
+                    ApellidosConductor.value = vehiculo.apellidosConductor
+                    ObservacionesdelVehiculo.value = vehiculo.observaciones
+                    btnVehiculoInvolucradoUpd.visible = True
+                    btnVehiculoInvolucradoAdd.visible = False
+        page.update()
+
+
+    def eliminar_vehiculo(e):
+        ref = (e.control.parent).parent
+        idd = int(ref.leading.value)
+        novAct = 0
+        posdel = 0 
+        for v in range (0, len(vehiculosInvolucrados)):
+            novAct += 1
+            if int(vehiculosInvolucrados[v].noVehiculo) == idd:
+                novAct -= 1
+                posdel = v
+            vehiculosInvolucrados[v].noVehiculo = novAct
+        vehiculosInvolucrados.remove(vehiculosInvolucrados[posdel])             
+        vehiculosIncidenteslv.controls.clear() #.remove(ref)
+        mosaicos()
+        #print('FIN DLE FOR')
+        noVehiculoGet() 
         page.update()
 
 
@@ -828,7 +899,16 @@ def main(page: ft.Page):
         
 
     def limpiarControlesIncidentes():
-        pass
+        Vialidad.value = ''
+        Colonia.value = ''
+        Referencia.value = ''
+        DepositoDDL.options = []
+        DepositoDDL.options = depositosIncidentesDropDownList()
+        RespondienteNombreCompleto.value = ''
+        RespondienteIdentificacion.value = ''
+        NotaRespondiente.value = ''
+        Folio911.value = ''
+        page.update()
 
 
     def limpiarControlesVehiculosInci():
@@ -894,6 +974,13 @@ def main(page: ft.Page):
             agregarVehiculoMostrarControles()
         else:
             alerta('AVISO', 'FALTAN CAMPOS POR LLENAR')
+
+
+    def validarDatosVehiculoIncidente():
+        tipovehiculo = tipoVehiculoSeleccionado()
+
+
+    
 
 
     def incidenteMostrarControles():
@@ -990,6 +1077,7 @@ def main(page: ft.Page):
     # LIST VIEW PARA MOSTRAR LAS REGIONES
     lv = ft.ListView(spacing=5, auto_scroll=True, expand=1)
     listadep = ft.ListView(spacing=5, auto_scroll=True, width=400)
+    incidenteslv = ft.ListView(spacing=5, auto_scroll= True, width=750)
     vehiculosIncidenteslv = ft.ListView(spacing=5, auto_scroll= True, width=550)
 
 
@@ -1001,6 +1089,7 @@ def main(page: ft.Page):
         ], rows=[],
     )
 
+
     lista_municipios = ft.DataTable(
         columns=[
             ft.DataColumn(ft.Text('ID')),
@@ -1008,6 +1097,7 @@ def main(page: ft.Page):
             ft.DataColumn(ft.Text('REGION'))
         ], rows=[]
     ) 
+
 
     lista_depositos = ft.DataTable(
         columns=[
@@ -1017,6 +1107,23 @@ def main(page: ft.Page):
             ft.DataColumn(ft.Text('DIRECCIÓN')),
             ft.DataColumn(ft.Text('REGIÓN')),
             ft.DataColumn(ft.Text('TELEFONOS'))
+        ], rows=[]
+    )
+
+
+    lista_incidentes = ft.DataTable(
+        columns=[
+            ft.DataColumn(ft.Text('ID')),
+            ft.DataColumn(ft.Text('TIPO DE INCIDENTE')),
+            ft.DataColumn(ft.Text('FOLIO')),
+            ft.DataColumn(ft.Text('FECHA')),
+            ft.DataColumn(ft.Text('VIALIDAD')),
+            ft.DataColumn(ft.Text('COLONIA')),
+            ft.DataColumn(ft.Text('UBICACION (LINK MAPS)')),
+            ft.DataColumn(ft.Text('ESTATUS')),
+            ft.DataColumn(ft.Text('MUNICIPIO')),
+            ft.DataColumn(ft.Text('RAZON SOCIAL')),
+            ft.DataColumn(ft.Text('INVOLUCRADOS'))
         ], rows=[]
     )   
     # LIST VIEW PARA MOSTRAR LAS REGIONES
@@ -1053,6 +1160,29 @@ def main(page: ft.Page):
         lv.controls.clear()
         lv.controls.append(lista_depositos)
         generar_tabla_depositos(depositosDb)
+        page.update()
+
+
+    def incidentesLista():
+        consutaSql = ''' SELECT inc.Id,
+                                TipoIncidente
+                                ,FolioIncidente
+                                ,CONVERT(varchar(20), FechaIncidente, 111) as FechaIncidente
+                                ,UPPER(VialidadIncidente) AS VialidadIncidente
+                                ,upper(ColoniaIncidente) AS ColoniaIncidente
+                                ,UbicacionIncidente
+                                ,EstatusIncidente
+                                ,cmu.Municipio
+                                ,cdep.RazonSocial 
+                                ,CONVERT(NVARCHAR(10) , [dbo].[uf_CantVehiculosIncidentes](inc.Id)) + ' UNIDAD(ES) INVOLUCRADA(S) ' as Cant
+                            FROM Incidentes inc
+                    INNER JOIN CatMunicipio cmu ON inc.MunicipioId = cmu.Id
+                    INNER JOIN CatDepositoVehicular cdep ON inc.DepositoVehicularId = cdep.Id
+                        WHERE YEAR(inc.FechaIncidente) = 2025'''
+        incidentesDb = run_query(consutaSql)
+        incidenteslv.controls.clear()
+        incidenteslv.controls.append(lista_incidentes)
+        generar_tabla_incidentes(incidentesDb)
         page.update()
 
 
@@ -1153,6 +1283,17 @@ def main(page: ft.Page):
         page.update()
 
 
+    def generar_tabla_incidentes(filas):
+        rows = []
+        for fila in filas:
+            cells = []
+            for col in fila:
+                cells.append(ft.DataCell(ft.Text(col)))
+            rows.append(ft.DataRow(cells=cells, )) # on_select_changed=selectedrowDepositos
+        lista_incidentes.rows = rows
+        page.update()
+
+
     def regionSeleccionada():
         textoSeleccionado = municipioSelectRegion.value
         posicion = textoSeleccionado.find('-')
@@ -1225,25 +1366,25 @@ def main(page: ft.Page):
             textoSeleccionado = TipoVehiculoDDL.value
             if(textoSeleccionado == 'BICICLETA'):
                     SinPlacas.disabled = True
-                    SinPlacas.value = False
+                    SinPlacas.value = True
                     LugarOrigenPlacasDDL.options = []
                     LugarOrigenPlacasDDL.key = []
                     LugarOrigenPlacasDDL.disabled = True
-                    NoPlaca.value = ''
+                    NoPlaca.value = 'NO APLICA'
                     NoPlaca.disabled = True
-                    NoSerie.value = ''
+                    NoSerie.value = 'NO APLICA'
                     NoSerie.disabled = True
                     MarcaDDL.options = []
                     MarcaDDL.key = []
                     MarcaDDL.disabled = True
-                    Linea.value = ''
+                    Linea.value = 'NO APLICA'
                     Linea.disabled = True
-                    ModeloVehiculo.value = ''
+                    ModeloVehiculo.value = 'NO APLICA'
                     ModeloVehiculo.disabled = True
                     NombreConductor.value = ''
-                    NombreConductor.disabled = True
+                    # NombreConductor.disabled = True
                     ApellidosConductor.value = ''
-                    ApellidosConductor.disabled = True
+                    # ApellidosConductor.disabled = True
                     page.update()
             if(textoSeleccionado != 'BICICLETA'):
                     SinPlacas.disabled = False                    
@@ -1288,6 +1429,19 @@ def main(page: ft.Page):
                 return 0
         except:
             return 0
+
+
+    def origenPlacasNombreSeleccionado():
+        try:
+            textoSelect = LugarOrigenPlacasDDL.value
+            posicion = textoSelect.find('-')
+            if posicion != -1:
+                valor = textoSelect[posicion:]
+                return valor
+            else:
+                return ''
+        except:
+            return ''
 
 
     def regionDescripcion(municipioId):
@@ -1525,10 +1679,35 @@ def main(page: ft.Page):
             alerta('AVISO', 'Revisa tu conexion a internet o intenta con otro enlace')
 
 
+    def mosaicos():
+        # vehiculosIncidenteslv.controls.clear()  # limpiamos el listView para volverlo a llenar
+        veh_temp = []
+        for vi in vehiculosInvolucrados:
+            elemento = ft.ListTile(
+                leading= ft.Text(value=str(vi.noVehiculo).zfill(3), color= ft.Colors.BLACK),
+                title= ft.Text(value=str(vi.marca + ' ' + vi.linea + ' ' + str(vi.modelo) + ' ' + vi.noPlacas)),
+                trailing= ft.PopupMenuButton(
+                    icon=ft.Icons.MORE_VERT,
+                    items=[
+                        ft.PopupMenuItem(text="EDITAR", on_click= editar_vehiculo),
+                        ft.PopupMenuItem(text="ELIMINAR", on_click= eliminar_vehiculo)
+                    ],
+                )
+            )
+            veh_temp.append(elemento)
+            # for vt in veh_temp:
+            #     print(vt.title)
+        vehiculosIncidenteslv.controls.extend(veh_temp)
+        if len(veh_temp) > 0:            
+            btnAgregarRegistro.visible = True        
+        page.update()
+
+
     def agregarVehiculoLista():
         marcaSelected = marcaVehiculoGet()
         marcaId = marcaIdSeleccionado()
-        origenPlacas = origenPlacasSeleccionado()
+        origenPlacasId = origenPlacasSeleccionado()
+        origenPlacasNombre = origenPlacasNombreSeleccionado()
         if TipoVehiculoDDL.value == "BICICLETA":
             TipoGruaDDL.value = 'N/A'
             NoPlaca.value = 'N/A'
@@ -1539,33 +1718,56 @@ def main(page: ft.Page):
             ColorVehIncidente.value = 'N/A'
 
         vehiculosInvolucrados.append(
-            VehiculoIncidente(1, NoVehiculo.value, TipoVehiculoDDL.value, TipoGruaDDL.value,  SinPlacas.value, origenPlacas, 
+            VehiculoIncidente(1, NoVehiculo.value, TipoVehiculoDDL.value, TipoGruaDDL.value,  SinPlacas.value, origenPlacasId, origenPlacasNombre,
                             NoPlaca.value, NoSerie.value, marcaId, marcaSelected, Linea.value, ModeloVehiculo.value, ColorVehIncidente.value,
                             NombreConductor.value, ApellidosConductor.value, ObservacionesdelVehiculo.value)
         )
         vehiculosIncidenteslv.controls.clear()  # limpiamos el listView para volverlo a llenar
         
         limpiarControlesVehiculosInci()  # limpiamos los controles de registro
-        veh_temp = []
-        for vi in vehiculosInvolucrados:
-            elemento = ft.ListTile(
-                leading= ft.Text(value=str(vi.noVehiculo).zfill(3), color= ft.Colors.BLACK),
-                title= ft.Text(value=str(vi.marca + ' ' + vi.linea + ' ' + vi.modelo + ' ' + vi.noPlacas)),
-                trailing= ft.PopupMenuButton(
-                    icon=ft.Icons.MORE_VERT,
-                    items=[
-                        ft.PopupMenuItem(text="EDITAR"),
-                        ft.PopupMenuItem(text="ELIMINAR")
-                    ],
-                )
-            )
-            veh_temp.append(elemento)
-            for vt in veh_temp:
-                print(vt.title)
-        vehiculosIncidenteslv.controls.extend(veh_temp)
-        if len(veh_temp) > 0:            
-            btnAgregarRegistro.visible = True     
-        
+        mosaicos()
+        # veh_temp = []
+        # for vi in vehiculosInvolucrados:
+        #     elemento = ft.ListTile(
+        #         leading= ft.Text(value=str(vi.noVehiculo).zfill(3), color= ft.Colors.BLACK),
+        #         title= ft.Text(value=str(vi.marca + ' ' + vi.linea + ' ' + str(vi.modelo) + ' ' + vi.noPlacas)),
+        #         trailing= ft.PopupMenuButton(
+        #             icon=ft.Icons.MORE_VERT,
+        #             items=[
+        #                 ft.PopupMenuItem(text="EDITAR", on_click= editar_vehiculo),
+        #                 ft.PopupMenuItem(text="ELIMINAR", on_click= eliminar_vehiculo)
+        #             ],
+        #         )
+        #     )
+        #     veh_temp.append(elemento)
+        #     for vt in veh_temp:
+        #         print(vt.title)
+        # vehiculosIncidenteslv.controls.extend(veh_temp)
+        # if len(veh_temp) > 0:            
+        #     btnAgregarRegistro.visible = True        
+        # page.update()
+
+
+    def vehiculoDatosUpdate():
+        for vt in vehiculosInvolucrados:
+            if int(vt.noVehiculo) == int(NoVehiculo.value):
+                origenPlacasId = origenPlacasSeleccionado()
+                origenPlacasNombre = origenPlacasNombreSeleccionado()
+                marcaId = marcaIdSeleccionado()
+                marcaSelected = marcaVehiculoGet()
+
+                vt.actualizarDatos(TipoVehiculoDDL.value, TipoGruaDDL.value, SinPlacas.value,
+                                   origenPlacasId, origenPlacasNombre, NoPlaca.value, NoSerie.value,
+                                   marcaId, marcaSelected, Linea.value, ModeloVehiculo.value,
+                                   ColorVehIncidente.value, NombreConductor.value, ApellidosConductor.value, ObservacionesdelVehiculo.value)
+                
+        limpiarControlesVehiculosInci()
+        btnVehiculoInvolucradoAdd.visible = True
+        btnVehiculoInvolucradoUpd.visible = False
+        vehiculosIncidenteslv.controls.clear()
+        mosaicos()
+        noVehiculoGet()
+
         page.update()
 
 
@@ -1783,6 +1985,7 @@ def main(page: ft.Page):
             IdIncidente = res[0][0]
             guardados = 0
             if (int(IdIncidente) > 0):
+                alerta('AVISO', 'INCIDENTE GUARDADO CORRECTAMENTE')
                 for vi in vehiculosInvolucrados:
                     insertVehiculosInvolucradosQuery = '''
                     INSERT INTO [dbo].[IncidenteVehiculos]
@@ -1795,7 +1998,7 @@ def main(page: ft.Page):
                     VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ,?, ?, 1, GETDATE(), 1)'''
                     run_query(insertVehiculosInvolucradosQuery,
                               (IdIncidente, vi.noVehiculo, vi.tipoVehiculo, vi.tipoGrua,
-                               vi.sinPlacas, vi.origenPLacasId, vi.noPlacas,
+                               vi.sinPlacas, vi.origenPlacasId, vi.noPlacas,
                                vi.noSerie, vi.marcaId, vi.linea,
                                vi.modelo, vi.color, vi.nombreConductor,
                                vi.apellidosConductor, vi.observaciones))
@@ -1807,6 +2010,7 @@ def main(page: ft.Page):
 
                 # regionesLista()
                 limpiarControles()
+                limpiarControlesIncidentes()
                 botonesAgregar()
                 # RECORRER PARA GUARDAR LOS ELEMENTOS DE LA LISTA DE VEHICULOS INVOLUCRADOS
             else:
@@ -1903,6 +2107,7 @@ def main(page: ft.Page):
     textoAgregarVehiculoIncidente = ft.Text(value='VER VEHICULOS INVOLUCRADOS', size=13)
     textoDatosIncidente = ft.Text(value='DATOS DEL INCIDENTE', size=13)
     textoVehiculosAdd = ft.Text(value='AGREGAR A LA LISTA', size=13)
+    textoVehiculosUpd = ft.Text(value='EDITAR INFORMACIÓN', size=13)
 
     # Controles mapa
     visor_map = ft.InteractiveViewer(
@@ -1935,6 +2140,7 @@ def main(page: ft.Page):
     btnAgregarVehiculoIncidente = ft.CupertinoFilledButton(content=textoAgregarVehiculoIncidente, width=180, height=50, opacity_on_click=0.3, border_radius=10, visible = True)
     btnDatosIncidente = ft.CupertinoFilledButton(content=textoDatosIncidente, width=180, height=50, opacity_on_click=0.3, border_radius=10, visible = False)
     btnVehiculoInvolucradoAdd = ft.CupertinoFilledButton(content=textoVehiculosAdd, width=180, height=50, opacity_on_click=0.3, border_radius=10, visible= False)
+    btnVehiculoInvolucradoUpd = ft.CupertinoFilledButton(content=textoVehiculosUpd, width=180, height=50, opacity_on_click=0.3, border_radius=10, visible= False, on_click= lambda _:vehiculoDatosUpdate())
     
 
     def on_navigation_change(e):
@@ -2215,6 +2421,8 @@ def main(page: ft.Page):
         btnDatosIncidente.on_click = lambda _:incidenteMostrarControles()
         btnVehiculoInvolucradoAdd.on_click = lambda _:agregarVehiculoLista()
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+        incidentesLista()
+        # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
         TipoIncidenteDDL.options = []
         tipoIncidenteDDL()
         EstatusIncidenteDDL.options =[]
@@ -2275,12 +2483,25 @@ def main(page: ft.Page):
                 ]  
             ),
             ft.Row(
-                controls=[btnVehiculoInvolucradoAdd]
+                controls=[btnVehiculoInvolucradoAdd, btnVehiculoInvolucradoUpd]
             ),
             ft.Row(
                 controls=[
                     ft.Row(
                         controls=[btnAgregarRegistro, btnEditarRegistro, btnCancelarAccionForm]
+                    )
+                ]
+            ),
+            ft.Row(
+                vertical_alignment= ft.CrossAxisAlignment.CENTER,
+                controls=[
+                    ft.Container(
+                        ft.Container(
+                            width=800,
+                            height=450,
+                            alignment=ft.Alignment(0.0, 0.0),
+                            content= incidenteslv
+                        )
                     )
                 ]
             )
