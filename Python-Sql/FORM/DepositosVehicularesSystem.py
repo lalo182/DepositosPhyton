@@ -126,8 +126,8 @@ def main(page: ft.Page):
     anchocol = 220
 
     # servidor = '10.27.1.14' # # SERVIDOR PRODUCTIVO
-    servidor = 'DESKTOP-TO7CUU2' # SERVIDIOR DE PABLO
-    #servidor = 'DESKTOP-SMKHTJB'  # SERVIDOR DE LALO
+    # servidor = 'DESKTOP-TO7CUU2' # SERVIDIOR DE PABLO
+    servidor = 'DESKTOP-SMKHTJB'  # SERVIDOR DE LALO
     basedatos = 'DepositoVehicular_DB'
     usuario = 'sa'
     claveacceso = 'Gruas$mT*$!'
@@ -1085,6 +1085,7 @@ def main(page: ft.Page):
     lv = ft.ListView(spacing=5, auto_scroll=True, expand=1)
     listadep = ft.ListView(spacing=5, auto_scroll=True, width=400)
     incidenteslv = ft.ListView(spacing=10, auto_scroll= True, width=750)
+    EstatusIncidenteslv = ft.ListView(spacing=10, auto_scroll= True, width=750)
     vehiculosIncidenteslv = ft.ListView(spacing=5, auto_scroll= True, width=550)
 
 
@@ -1132,7 +1133,23 @@ def main(page: ft.Page):
             ft.DataColumn(ft.Text('RAZON SOCIAL')),
             ft.DataColumn(ft.Text('INVOLUCRADOS'))
         ], rows=[]
-    )   
+    )
+
+
+    lista_estatusIncidentes = ft.DataTable(
+        columns=[
+            ft.DataColumn(ft.Text('ID')),
+            ft.DataColumn(ft.Text('FOLIO')),
+            ft.DataColumn(ft.Text('TIPO DE INCIDENTE')),
+            ft.DataColumn(ft.Text('ESTATUS')),
+            ft.DataColumn(ft.Text('FECHA Y HORA')),
+            ft.DataColumn(ft.Text('VIALIDAD')),
+            ft.DataColumn(ft.Text('COLONIA')),
+            ft.DataColumn(ft.Text('MUNICIPIO')),
+            ft.DataColumn(ft.Text('DEPOSITO')),
+            ft.DataColumn(ft.Text('RESPONDIENTE'))
+        ]
+    )
     # LIST VIEW PARA MOSTRAR LAS REGIONES
 
     # ELEMENTOS PARA LA PLANTILLA DEL FORMULARIO DE REGIONES
@@ -1173,8 +1190,8 @@ def main(page: ft.Page):
     def incidentesLista(anio):
         consutaSql = ''' SELECT inc.Id,
                                 TipoIncidente
-                                ,FolioIncidente
-                                ,CONVERT(varchar(20), FechaIncidente, 111) as FechaIncidente
+                                ,RIGHT('000'+CAST(FolioIncidente AS VARCHAR(3)),3) AS FolioInciden
+                                ,CONVERT(varchar(20), FechaIncidente, 120) as FechaIncidente
                                 ,UPPER(VialidadIncidente) AS VialidadIncidente
                                 ,upper(ColoniaIncidente) AS ColoniaIncidente
                                 ,UbicacionIncidente
@@ -1191,6 +1208,31 @@ def main(page: ft.Page):
         incidenteslv.controls.append(lista_incidentes)
         generar_tabla_incidentes(incidentesDb)
         page.update()
+
+
+    def estatusIncidenteLista(anio):
+        consultaSql = ''' SELECT inc.Id
+                                ,RIGHT('000'+CAST(FolioIncidente AS VARCHAR(3)),3) AS FolioInciden		  
+                                ,TipoIncidente
+                                ,inc.EstatusIncidente
+                                ,UPPER(CONVERT(VARCHAR(16), FechaIncidente, 120)) AS FechaIncidente
+                                ,UPPER(VialidadIncidente) AS VialidadIncidente
+                                ,UPPER(ColoniaIncidente) AS ColoniaIncidente 
+                                ,UPPER(cmu.Municipio) AS Municipio
+                                ,cdv.RazonSocial
+                                ,inc.RespondienteNombreCompleto
+                            FROM Incidentes inc
+                        INNER JOIN CatMunicipio cmu ON inc.MunicipioId = cmu.Id
+                        INNER JOIN CatDepositoVehicular cdv ON inc.DepositoVehicularId = cdv.Id 
+                            WHERE YEAR(FechaIncidente) = ?'''
+        incidentesEstatus = run_query(consultaSql, (int(anio),))
+        # for i in incidentesEstatus:
+        #     print(i)
+        EstatusIncidenteslv.controls.clear()
+        EstatusIncidenteslv.controls.append(lista_estatusIncidentes)
+        generar_Tabla_EstatusIncidente(incidentesEstatus)
+        page.update()
+
 
 
     def selectedrow(e):    
@@ -1257,6 +1299,12 @@ def main(page: ft.Page):
         page.update()
 
 
+    def selectedrowEstatusIncidentes(e):
+        IdSeleccionado = int(e.control.cells[0].content.value)
+        print(IdSeleccionado)
+        pass
+
+
     def generar_tabla(filas):
         rows = []
         for fila in filas:
@@ -1298,6 +1346,17 @@ def main(page: ft.Page):
                 cells.append(ft.DataCell(ft.Text(col)))
             rows.append(ft.DataRow(cells=cells, )) # on_select_changed=selectedrowDepositos
         lista_incidentes.rows = rows
+        page.update()
+
+    
+    def generar_Tabla_EstatusIncidente(filas):
+        rows = []
+        for fila in filas:
+            cells = []
+            for col in fila:
+                cells.append(ft.DataCell(ft.Text(col)))
+            rows.append(ft.DataRow(cells=cells, on_select_changed=selectedrowEstatusIncidentes)) # on_select_changed=selectedrowDepositos
+        lista_estatusIncidentes.rows = rows
         page.update()
 
 
@@ -1483,6 +1542,14 @@ def main(page: ft.Page):
         except:
             return 0
         
+    
+    def filtroEstatusIncideneAnioSeleccionado():
+        try:
+            textoSelect = FiltroEstatusIncidentesAnioDDL.value
+            estatusIncidenteLista(int(textoSelect))
+        except:
+            return 0
+        
 
     def regionesDropDownList():
         consultaSql = 'SELECT Id, NombreRegion  FROM CatRegion WHERE Activo = 1 ORDER BY NombreRegion'
@@ -1562,6 +1629,18 @@ def main(page: ft.Page):
         anios = run_query(consultaSql)
         for row in anios:
             FiltroIncidentesAnioDDL.options.append(
+                ft.DropdownOption(
+                    key= (str(row[0])),
+                    content= ft.Text(str(row[0]))
+                )
+            )
+
+    
+    def filtroEstatusIncidenteAniosDropDownList():
+        consultaSql = 'SELECT DISTINCT(YEAR(FechaIncidente)) AS ANIOS FROM Incidentes WHERE Activo = 1'
+        anios = run_query(consultaSql)
+        for row in anios:
+            FiltroEstatusIncidentesAnioDDL.options.append(
                 ft.DropdownOption(
                     key= (str(row[0])),
                     content= ft.Text(str(row[0]))
@@ -1802,6 +1881,22 @@ def main(page: ft.Page):
         page.update()
 
 
+    def estatusIncidenteUpdate():
+        try:
+            consultaLite = 'SELECT Descripcion FROM CatEstatusIncidente WHERE Activo = 1'
+            rows = run_queryLite(consultaLite)
+            for row in rows:
+                EstatusAdministracionDDL.options.append(
+                    ft.DropdownOption(
+                        key= (str(row[0])),
+                        content= ft.Text(str(row[0]))
+                    )
+                )
+            EstatusAdministracionDDL.value = "EN ARRIBO"
+        except Exception as er:
+            print("Error: ", er)
+
+
     def regionesAdd():
         nuevaRegion = regionNombre.value.upper()
         consultaSql = 'INSERT INTO CatRegion (NombreRegion, Activo) VALUES(?, 1)'
@@ -2021,10 +2116,10 @@ def main(page: ft.Page):
                 if (int(IdIncidente) > 0):
                     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
                     registrarEstatus = '''INSERT INTO [EstatusIncidentes]
-                                            ([IncidenteId],[DepositoVehicularId],[Estatus]
+                                            ([IncidenteId],[DepositoVehicularId],[EstatusId]
                                             ,[FechaMovimiento],[CreadoPor],[Activo])
-                                        VALUES(?, ?, ?, GETDATE(), 1, 1)'''
-                    run_query(registrarEstatus, (int(IdIncidente), int(depositoVal), estatusIncidenteVal,))
+                                        VALUES(?, ?, 1, GETDATE(), 1, 1)'''
+                    run_query(registrarEstatus, (int(IdIncidente), int(depositoVal),))
                     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
                     alerta('AVISO', 'INCIDENTE GUARDADO CORRECTAMENTE')
                     for vi in vehiculosInvolucrados:
@@ -2126,7 +2221,7 @@ def main(page: ft.Page):
     NotaRespondiente = ft.TextField(label='NOTA DE RESPONDIENTE', width= 1010)
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
     Folio911 = ft.TextField(label='FOLIO DE 911', width=200)
-    EstatusIncidenteDDL = Dropdown(label= 'ESTATUS INCIDENTE *', width=350, enable_filter= True, editable= True) 
+    EstatusIncidenteDDL = Dropdown(label= 'ESTATUS INCIDENTE *', width=350, enable_filter= True, editable= True, visible= False) 
 
     # CONTROLES PARA EL FORMULARIO DE VEHICULOS DE INCIDENTES
     IdVehiculoIncidente = ft.TextField(label='Id', width= 70, read_only= True, visible= False)
@@ -2151,7 +2246,11 @@ def main(page: ft.Page):
     ObservacionesdelVehiculo = ft.TextField(label='OBSERVACIONES', width=900, visible= False)
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     FiltroIncidentesAnioDDL = Dropdown(label= 'AÑO', width=250, enable_filter= True, editable= True, on_change=lambda _:filtroIncideneAnioSeleccionado())
-    
+    FiltroEstatusIncidentesAnioDDL = Dropdown(label= 'AÑO', width=250, enable_filter= True, editable= True, on_change=lambda _:filtroEstatusIncideneAnioSeleccionado())    
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    DatosIncidentesTxt = ft.TextField(label='Datos del incidente', width=600, visible= True, read_only= False)
+    EstatusAdministracionDDL = Dropdown(label= 'Estatus *', width=250, enable_filter= True, editable= True)
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     #textosControles
     textoGuardar = ft.Text(value='GUARDAR', size=13)
     textoEditar = ft.Text(value='EDITAR', size=13)
@@ -2160,6 +2259,7 @@ def main(page: ft.Page):
     textoDatosIncidente = ft.Text(value='DATOS DEL INCIDENTE', size=13)
     textoVehiculosAdd = ft.Text(value='AGREGAR A LA LISTA', size=13)
     textoVehiculosUpd = ft.Text(value='EDITAR INFORMACIÓN', size=13)
+    textoActualizarEstatus = ft.Text(value='ACTUALIZAR ESTATUS', size=13)
 
     # Controles mapa
     visor_map = ft.InteractiveViewer(
@@ -2193,7 +2293,10 @@ def main(page: ft.Page):
     btnDatosIncidente = ft.CupertinoFilledButton(content=textoDatosIncidente, width=180, height=50, opacity_on_click=0.3, border_radius=10, visible = False)
     btnVehiculoInvolucradoAdd = ft.CupertinoFilledButton(content=textoVehiculosAdd, width=180, height=50, opacity_on_click=0.3, border_radius=10, visible= False)
     btnVehiculoInvolucradoUpd = ft.CupertinoFilledButton(content=textoVehiculosUpd, width=180, height=50, opacity_on_click=0.3, border_radius=10, visible= False, on_click= lambda _:vehiculoDatosUpdate())
-    
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    btnActualizarEstatus = ft.CupertinoFilledButton(content=textoActualizarEstatus, width=180, height=50, opacity_on_click=0.3, border_radius=10, visible= False, on_click= lambda _:estatusIncidenteUpdate())
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
 
     def on_navigation_change(e):
         selected_index = e.control.selected_index
@@ -2211,6 +2314,8 @@ def main(page: ft.Page):
             show_Incidentes()
         if selected_index == 5:
             show_IncidenteRegistros()
+        if selected_index == 6:
+            show_AdministracionEstatusIncdente()
         page.update()
 
 
@@ -2552,13 +2657,17 @@ def main(page: ft.Page):
         page.controls.clear()
         encabezado = ft.Text('INCIDENTES REGISTRADOS', size= 30)
         page.add(encabezado)
+
         FiltroIncidentesAnioDDL.options = []
         FiltroIncidentesAnioDDL.key = []
         filtroIncidenteAniosDropDownList()
+
         fecha_actual = dt.date.today() # datetime.date.today()
-        año_actual = fecha_actual.year
-        FiltroIncidentesAnioDDL.value = año_actual
-        incidentesLista(año_actual)
+        anio_actual = fecha_actual.year
+        FiltroIncidentesAnioDDL.value = anio_actual
+
+        incidentesLista(anio_actual)
+
         page.add(
             ft.Row(
                 controls=[
@@ -2590,6 +2699,66 @@ def main(page: ft.Page):
         page.update()
 
 
+    def show_AdministracionEstatusIncdente():
+        page.controls.clear()
+        encabezado = ft.Text('ACTUALIZAR ESTATUS DE INCIDENTE', size= 30)
+
+        FiltroEstatusIncidentesAnioDDL.options = []
+        FiltroEstatusIncidentesAnioDDL.key = []
+        filtroEstatusIncidenteAniosDropDownList()
+        
+        fecha_actual = dt.date.today() # datetime.date.today()
+        anio_actual = fecha_actual.year
+        FiltroEstatusIncidentesAnioDDL.value = anio_actual
+                
+        estatusIncidenteLista(anio_actual)
+
+        page.add(encabezado)
+        page.add(
+            ft.Row(
+                controls=[
+                    ft.Row(
+                        controls=[
+                            ft.Column(
+                                controls=[
+                                    ft.Row(controls=[DatosIncidentesTxt, EstatusAdministracionDDL, btnActualizarEstatus ])                                                                                                           
+                                ]
+                            )
+                        ]
+                    )                    
+                ]
+            ),
+            ft.Row(
+                controls=[
+                    ft.Row(
+                        controls=[
+                            ft.Column(
+                                controls=[
+                                    ft.Row(controls=[FiltroEstatusIncidentesAnioDDL])                                                                                                       
+                                ]
+                            )
+                        ]
+                    )                    
+                ]
+            ),
+            ft.Row(
+                vertical_alignment= ft.CrossAxisAlignment.CENTER,
+                controls=[
+                    ft.Container(
+                        ft.Container(
+                            width=800,
+                            height=650,
+                            alignment=ft.Alignment(0.0, 0.0),
+                            content= EstatusIncidenteslv
+                        )
+                    )
+                ]
+            )
+        )
+        page.update()
+    
+
+
     barradeNavegacion = ft.NavigationBar(
         selected_index= 0,
         on_change= on_navigation_change,
@@ -2600,7 +2769,8 @@ def main(page: ft.Page):
             ft.NavigationBarDestination(icon= ft.Icon(name=ft.Icons.ACCESS_TIME_FILLED_ROUNDED, color=ft.Colors.WHITE), label= 'Roles de Depositos'),
             # ft.NavigationBarDestination(icon= ft.Icon(name=ft.Icons.INFO_SHARP, color=ft.Colors.WHITE), label= 'Sanciones Depositos', visible= False),  # ACCOUNT_BOX, label= 'Sanciones Depositos')  # ADD_CARD_OUTLINED   # ADD_COMMENT
             ft.NavigationBarDestination(icon= ft.Icon(name=ft.Icons.COMMUTE, color=ft.Colors.WHITE), label= 'Formulario de Incidentes'),
-            ft.NavigationBarDestination(icon= ft.Icon(name=ft.Icons.TABLE_CHART_OUTLINED, color=ft.Colors.WHITE), label= 'Tabla de Incidentes')
+            ft.NavigationBarDestination(icon= ft.Icon(name=ft.Icons.TABLE_CHART_OUTLINED, color=ft.Colors.WHITE), label= 'Tabla de Incidentes'),
+            ft.NavigationBarDestination(icon= ft.Icon(name=ft.Icons.ADD_MODERATOR_OUTLINED, color=ft.Colors.WHITE), label= 'Estatus de Incidente')
         ],
         bgcolor= '#5F1B2D', 
         indicator_color= '#c4436f',
@@ -2612,4 +2782,4 @@ def main(page: ft.Page):
     show_CatRegiones()
 
 
-ft.app(target= main)
+ft.app(target= main, )  # # # view= ft.WEB_BROWSER
