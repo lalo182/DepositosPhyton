@@ -20,7 +20,6 @@ class Deposito(): # Diseñado para almacenar informacion para los depositos
             self.fef = fec_fin  
             self.nom = nombre
 
-
 class Inasistencia(): # Almacena reportes de inasistencia de depositos
     def __init__(self, deposito, nota):
         self.dep = deposito
@@ -245,16 +244,18 @@ def main(page: ft.Page):
 
 
     colors=[
-        ft.Colors.GREEN_600, 
-        ft.Colors.ORANGE_700, 
-        ft.Colors.BLUE_800, 
-        ft.Colors.BROWN_200, 
-        ft.Colors.CYAN_800, 
-        ft.Colors.DEEP_PURPLE_700, 
-        ft.Colors.PINK_ACCENT_400, 
-        ft.Colors.RED_ACCENT_700, 
-        ft.Colors.TEAL_700, 
-        ft.Colors.WHITE60
+        "#912743", 
+        '#C79B66',
+        '#B2B2B1', 
+        '#17302D', 
+        '#861E34', 
+        '#E2BE96',
+        '#ECECEC', 
+        '#246257', 
+        "#B33449", 
+        '#FFFDED', 
+        '#3D9B84', 
+        '#484747',
     ]
 
     global mes
@@ -938,7 +939,7 @@ def main(page: ft.Page):
     def botonesAgregar():        
         btnAgregarRegistro.disabled =  False
         btnEditarRegistro.disabled = False
-        btnAgregarRegistro.visible =  False
+        btnAgregarRegistro.visible =  True
         btnEditarRegistro.visible = False
         btnCancelarAccionForm.visible = False
         regionActivo.visible = False
