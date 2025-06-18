@@ -125,9 +125,9 @@ def main(page: ft.Page):
     # page.window.min_height=largo_win
     anchocol = 220
 
-    # servidor = '10.27.1.14' # # SERVIDOR PRODUCTIVO
-    # servidor = 'DESKTOP-TO7CUU2' # SERVIDIOR DE PABLO
-    servidor = 'DESKTOP-SMKHTJB'  # SERVIDOR DE LALO
+    servidor = '10.27.1.14' # # SERVIDOR PRODUCTIVO
+    #servidor = 'DESKTOP-TO7CUU2' # SERVIDIOR DE PABLO
+    #servidor = 'DESKTOP-SMKHTJB'  # SERVIDOR DE LALO
     basedatos = 'DepositoVehicular_DB'
     usuario = 'sa'
     claveacceso = 'Gruas$mT*$!'
@@ -137,9 +137,9 @@ def main(page: ft.Page):
     diasm = []
     inasists = []
     
-    # stringConexion = f"DRIVER={{SQL Server}}; SERVER={servidor}; DATABASE={basedatos}; UID={usuario};PWD={claveacceso}"   #  CADENA DE CONEXION
+    stringConexion = f"DRIVER={{SQL Server}}; SERVER={servidor}; DATABASE={basedatos}; UID={usuario};PWD={claveacceso}"   #  CADENA DE CONEXION
 
-    stringConexion = f"DRIVER={{SQL Server}}; SERVER={servidor}; DATABASE={basedatos}; Trusted_Connection=yes"   #  CADENA DE CONEXION
+    #stringConexion = f"DRIVER={{SQL Server}}; SERVER={servidor}; DATABASE={basedatos}; Trusted_Connection=yes"   #  CADENA DE CONEXION
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #     
     def run_query(consulta, parameters = ()):
@@ -305,7 +305,7 @@ def main(page: ft.Page):
         ref = ((((e.control.parent).parent).parent).parent).parent
         idd = int(ref.leading.value)
 
-        global mes
+        #global mes
         listadep.controls.remove(ref)
         for dep in regdep:
             if dep.iddep == idd: #identifica deposito seleccionado
@@ -579,6 +579,8 @@ def main(page: ft.Page):
     def consulta_rol(region):
         global mes
         global anio
+        print(mes)
+        print(anio)
         
         query_rol = 'SELECT * FROM [dbo].[Reg_Roles] WHERE ANIO=? AND MES=? AND regid=? AND act=1'
         listdep = run_query(query_rol, (anio, mes, region,))
@@ -664,8 +666,8 @@ def main(page: ft.Page):
 
         if rolqry != None:
             for d in rolqry:
-                act_rol ='UPDATE [dbo].[DepositosRoles] set [Activo]=0 WHERE [DepositoVehicularId]=?'
-                run_query(act_rol,(d[0],))
+                act_rol ='UPDATE [dbo].[DepositosRoles] set [Activo]=0 WHERE [DepositoVehicularId]=? AND [Mes]=? AND [Anio]=?'
+                run_query(act_rol,(d[0],mes,anio))
             
         for dep in regdep:
             for dia in itemsd:
@@ -2770,7 +2772,7 @@ def main(page: ft.Page):
             # ft.NavigationBarDestination(icon= ft.Icon(name=ft.Icons.INFO_SHARP, color=ft.Colors.WHITE), label= 'Sanciones Depositos', visible= False),  # ACCOUNT_BOX, label= 'Sanciones Depositos')  # ADD_CARD_OUTLINED   # ADD_COMMENT
             ft.NavigationBarDestination(icon= ft.Icon(name=ft.Icons.COMMUTE, color=ft.Colors.WHITE), label= 'Formulario de Incidentes'),
             ft.NavigationBarDestination(icon= ft.Icon(name=ft.Icons.TABLE_CHART_OUTLINED, color=ft.Colors.WHITE), label= 'Tabla de Incidentes'),
-            ft.NavigationBarDestination(icon= ft.Icon(name=ft.Icons.ADD_MODERATOR_OUTLINED, color=ft.Colors.WHITE), label= 'Estatus de Incidente')
+            #ft.NavigationBarDestination(icon= ft.Icon(name=ft.Icons.ADD_MODERATOR_OUTLINED, color=ft.Colors.WHITE), label= 'Estatus de Incidente')
         ],
         bgcolor= '#5F1B2D', 
         indicator_color= '#c4436f',
