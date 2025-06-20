@@ -253,6 +253,39 @@ def main(page: ft.Page):
         except Exception as er:
             print("Error: ", er)
 
+    def cambiotv():
+        if TipoVehiculoDDL.value != None:
+            if TipoVehiculoDDL.value == 'AUTOBUS':
+                tv = ['TIPO B', 'TIPO C']
+            if TipoVehiculoDDL.value == 'BICICLETA' or TipoVehiculoDDL.value == 'MOTOCICLETA':
+                tv = ['TIPO A']
+            if TipoVehiculoDDL.value == 'CAMIONETA' or TipoVehiculoDDL.value == 'VAN':
+                tv = ['TIPO A', 'TIPO B', 'TIPO C']
+            if TipoVehiculoDDL.value == 'REMOLQUE' or TipoVehiculoDDL.value == 'SEMIREMOLQUE':
+                tv = ['TIPO C', 'TIPO D']
+            if TipoVehiculoDDL.value == 'TRACTOCAMION': 
+                tv = ['TIPO D']
+            if TipoVehiculoDDL.value == 'VEHICULO': 
+                tv = ['TIPO A', 'TIPO B']
+        return tv
+
+
+    def tipoGruaDDLv2():
+        TipoGruaDDL.options=[]
+        TipoGruaDDL.key=[]
+        lista = []
+        tg = cambiotv()
+        lista.extend(tg)
+        # consultaLite = 'SELECT Descripcion FROM CatTipoGrua'
+        # rows = run_queryLite(consultaLite)
+        for row in lista:
+            TipoGruaDDL.options.append(
+                ft.DropdownOption(
+                    key= (row),
+                    content= ft.Text(row)
+                )
+            )
+        page.update()
 
     def alerta(titulo, mensaje):
         dlg = ft.AlertDialog(title= ft.Text(titulo), content= ft.Text(mensaje))
@@ -1205,7 +1238,7 @@ def main(page: ft.Page):
 
 
     def municipiosLista():
-            consultaSql = 'SELECT cmun.[Id],UPPER([Municipio]),creg.NombreRegion FROM [CatMunicipio] cmun INNER JOIN CatRegion creg ON cmun.RegionId = creg.Id ORDER BY cmun.Id'
+            consultaSql = 'SELECT cmun.[Id],UPPER([Municipio]),creg.NombreRegion FROM [CatMunicipio] cmun INNER JOIN CatRegion creg ON cmun.RegionId = creg.Id ORDER BY creg.NombreRegion'
             municipiosDb = run_query(consultaSql)
             lv.controls.clear()
             lv.controls.append(lista_municipios)
@@ -1265,6 +1298,19 @@ def main(page: ft.Page):
                 lv.controls.append(lista_depositos)
                 generar_tabla_depositos(depositosDb)
 
+            page.update()
+
+    def depositosBuscaListaReg():# busqueda en lista de muni
+        if municipioSelectRegion.value == None:
+            alerta('AVISO', 'No hay criterios de busqueda')
+        else:
+            consultaSql = 'SELECT cmun.[Id],UPPER([Municipio]),creg.NombreRegion FROM [CatMunicipio] cmun INNER JOIN CatRegion creg ON cmun.RegionId = creg.Id WHERE RegionId=?'
+            ls = (municipioSelectRegion.value).find('-')
+            idr = int(municipioSelectRegion.value[:ls])
+            depositosDb = run_query(consultaSql,(int(idr),))
+            lv.controls.clear()
+            lv.controls.append(lista_municipios)
+            generar_tabla_municipios(depositosDb)
             page.update()
 
 
@@ -1539,10 +1585,11 @@ def main(page: ft.Page):
 
 
     def tipoVehiculoSeleccionado():
+        tipoGruaDDLv2() #validacion tipo de grua
         try:
             textoSeleccionado = TipoVehiculoDDL.value
             if(textoSeleccionado == "BICICLETA"):
-                    TipoGruaDDL.value = 'N/A'
+                    #TipoGruaDDL.value = 'N/A'
                     SinPlacas.disabled = True
                     SinPlacas.value = True
                     # LugarOrigenPlacasDDL.options = []
@@ -2455,6 +2502,7 @@ def main(page: ft.Page):
     btnEditarRegistro = ft.CupertinoButton(content=textoEditar, width=180, height=55, opacity_on_click=0.3, border_radius=10, visible = False, bgcolor='#B2B2B1') # , on_click=lambda _:regionesUpdate()    
     btnCancelarAccionForm = ft.CupertinoButton(content=textoCancelar, width=180, height=55, opacity_on_click=0.3, border_radius=10, visible = False, bgcolor='#B33449') # , on_click=lambda _:regionesAdd()
     btnBuscarRegistro = ft.CupertinoButton(content=textoBuscar, width=180, height=55, opacity_on_click=0.3, border_radius=10, visible = True, bgcolor='#E2BE96', on_click=lambda _:depositosBuscaLista())
+    btnBuscarRegistroMun = ft.CupertinoButton(content=textoBuscar, width=180, height=55, opacity_on_click=0.3, border_radius=10, visible = True, bgcolor='#E2BE96', on_click=lambda _:depositosBuscaListaReg())
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     btnAgregarVehiculoIncidente = ft.CupertinoButton(content=textoAgregarVehiculoIncidente, width=180, height=50, opacity_on_click=0.3, border_radius=10, visible = True, bgcolor='#3D9B84')
     btnDatosIncidente = ft.CupertinoButton(content=textoDatosIncidente, width=180, height=50, opacity_on_click=0.3, border_radius=10, visible = False, bgcolor='#E2BE96')
@@ -2559,7 +2607,7 @@ def main(page: ft.Page):
             ),
             ft.Row(
                 vertical_alignment= ft.CrossAxisAlignment.START,
-                controls=[btnAgregarRegistro, btnEditarRegistro, btnCancelarAccionForm]
+                controls=[btnAgregarRegistro, btnEditarRegistro, btnCancelarAccionForm, btnBuscarRegistroMun]
             ),
             ft.Row(
                 vertical_alignment= ft.CrossAxisAlignment.CENTER,
@@ -2757,7 +2805,7 @@ def main(page: ft.Page):
         TipoVehiculoDDL.options = []
         tipoVehiculoDDL()
         # TipoGruaDDL.options = []
-        tipoGruaDDL()
+        tipoGruaDDLv2()
         MarcaDDL.options = []
         marcasVehiculosDropDownList()
         LugarOrigenPlacasDDL.options = []
