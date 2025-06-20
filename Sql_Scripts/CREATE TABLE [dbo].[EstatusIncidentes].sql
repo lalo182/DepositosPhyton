@@ -1,12 +1,9 @@
 USE [DepositoVehicular_DB]
 GO
 
-CREATE TABLE [dbo].[EstatusIncidentes](
+CREATE TABLE [dbo].[EstatusIncidente](
 	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[IncidenteId] [int] NOT NULL,
-	[DepositoVehicularId] [int] NOT NULL,
 	[Estatus] [nvarchar](32) NOT NULL,
-	[FechaMovimiento] [datetime] NOT NULL,
 	[CreadoPor] [int] NOT NULL,
 	[Activo] [bit] NOT NULL,
 PRIMARY KEY CLUSTERED

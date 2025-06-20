@@ -125,8 +125,8 @@ def main(page: ft.Page):
     # page.window.min_height=largo_win
     anchocol = 220
 
-    servidor = '10.27.1.14' # # SERVIDOR PRODUCTIVO
-    #servidor = 'DESKTOP-TO7CUU2' # SERVIDIOR DE PABLO
+    #servidor = '10.27.1.14' # # SERVIDOR PRODUCTIVO
+    servidor = 'DESKTOP-TO7CUU2' # SERVIDIOR DE PABLO
     #servidor = 'DESKTOP-SMKHTJB'  # SERVIDOR DE LALO
     basedatos = 'DepositoVehicular_DB'
     usuario = 'sa'
@@ -137,9 +137,9 @@ def main(page: ft.Page):
     diasm = []
     inasists = []
     
-    stringConexion = f"DRIVER={{SQL Server}}; SERVER={servidor}; DATABASE={basedatos}; UID={usuario};PWD={claveacceso}"   #  CADENA DE CONEXION
+    #stringConexion = f"DRIVER={{SQL Server}}; SERVER={servidor}; DATABASE={basedatos}; UID={usuario};PWD={claveacceso}"   #  CADENA DE CONEXION
 
-    #stringConexion = f"DRIVER={{SQL Server}}; SERVER={servidor}; DATABASE={basedatos}; Trusted_Connection=yes"   #  CADENA DE CONEXION
+    stringConexion = f"DRIVER={{SQL Server}}; SERVER={servidor}; DATABASE={basedatos}; Trusted_Connection=yes"   #  CADENA DE CONEXION
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #     
     def run_query(consulta, parameters = ()):
@@ -1088,6 +1088,7 @@ def main(page: ft.Page):
     listadep = ft.ListView(spacing=5, auto_scroll=True, width=400)
     incidenteslv = ft.ListView(spacing=10, auto_scroll= True, width=750)
     EstatusIncidenteslv = ft.ListView(spacing=10, auto_scroll= True, width=750)
+    incidentesreplv = ft.ListView(spacing=20, auto_scroll= True, width=1900)
     vehiculosIncidenteslv = ft.ListView(spacing=5, auto_scroll= True, width=550)
 
 
@@ -1137,6 +1138,22 @@ def main(page: ft.Page):
         ], rows=[]
     )
 
+    lista_incidentesrep = ft.DataTable(
+        columns=[
+            ft.DataColumn(ft.Text('FOLIO')),
+            ft.DataColumn(ft.Text('TIPO DE INCIDENTE')),
+            ft.DataColumn(ft.Text('FECHA')),
+            ft.DataColumn(ft.Text('VIALIDAD')),
+            ft.DataColumn(ft.Text('COLONIA')),
+            ft.DataColumn(ft.Text('REFERENCIA')),
+            ft.DataColumn(ft.Text('UBICACION (LINK MAPS)')),
+            ft.DataColumn(ft.Text('RESPONDIENTE')),
+            ft.DataColumn(ft.Text('ESTATUS')),
+            ft.DataColumn(ft.Text('MUNICIPIO')),
+            ft.DataColumn(ft.Text('REGION')),
+            ft.DataColumn(ft.Text('DEPOSITO'))
+        ], rows=[]
+    )
 
     lista_estatusIncidentes = ft.DataTable(
         columns=[
@@ -1181,12 +1198,51 @@ def main(page: ft.Page):
                          ,cr.NombreRegion
                          ,Telefonos
                      FROM CatDepositoVehicular cdv 
-               INNER JOIN CatRegion cr ON cdv.RegionId = cr.Id'''
+               INNER JOIN CatRegion cr ON cdv.RegionId = cr.Id ORDER BY cr.NombreRegion'''
         depositosDb = run_query(consultaSql)
         lv.controls.clear()
         lv.controls.append(lista_depositos)
         generar_tabla_depositos(depositosDb)
         page.update()
+
+    def depositosBuscaLista():# busqueda en lista de municipios
+        if municipioSelectRegion.value == '' and RazonSocial.value == '' and RepresentanteLegal.value=='':
+            alerta('AVISO', 'No hay criterios de busqueda')
+        else:
+            if RazonSocial.value == '' and RepresentanteLegal.value=='':
+                consultaSql = '''SELECT cdv.Id
+                                        ,RazonSocial
+                                        ,RepresentanteLegal
+                                        ,DireccionDeposito
+                                        ,cr.NombreRegion
+                                        ,Telefonos
+                                    FROM CatDepositoVehicular cdv 
+                                INNER JOIN CatRegion cr ON cdv.RegionId = cr.Id
+                                WHERE  RegionId = ?'''
+                ls = (RazonSocial.value).find('-')
+                idr = int(RazonSocial.value[:ls])
+                depositosDb = run_query(consultaSql(idr,))
+                lv.controls.clear()
+                lv.controls.append(lista_depositos)
+                generar_tabla_depositos(depositosDb)
+            else:
+                consultaSql = '''SELECT cdv.Id
+                                        ,RazonSocial
+                                        ,RepresentanteLegal
+                                        ,DireccionDeposito
+                                        ,cr.NombreRegion
+                                        ,Telefonos
+                                    FROM CatDepositoVehicular cdv 
+                                INNER JOIN CatRegion cr ON cdv.RegionId = cr.Id
+                                WHERE RazonSocial LIKE '%'''+RazonSocial.value+'''%' OR RepresentanteLegal LIKE '%'''+RepresentanteLegal.value+'''%' OR RegionId = ?'''
+                ls = (RazonSocial.value).find('-')
+                idr = int(RazonSocial.value[:ls])
+                depositosDb = run_query(consultaSql(idr,))
+                lv.controls.clear()
+                lv.controls.append(lista_depositos)
+                generar_tabla_depositos(depositosDb)
+
+            page.update()
 
 
     def incidentesLista(anio):
@@ -1211,8 +1267,29 @@ def main(page: ft.Page):
         generar_tabla_incidentes(incidentesDb)
         page.update()
 
+    def incidentesRepLista(dato, idfiltro):
+        if idfiltro == 1:
+            consultaSql = 'SELECT FolioIncidente, TipoIncidente, FechaIncidente, VialidadIncidente, ColoniaIncidente, ReferenciaUbicacionIncidente, UbicacionIncidente, RespondienteNombreCompleto, EstatusIncidente, Municipio, NombreRegion, RazonSocial FROM Incidentes, CatMunicipio, CatRegion, CatDepositoVehicular WHERE MunicipioId=CatMunicipio.Id AND Incidentes.RegionId = CatRegion.Id AND DepositoVehicularId = CatDepositoVehicular.Id AND EstatusIncidente = ?'
+        if idfiltro == 2:
+            ls = (FiltroIncidentesDepDDL.value).find('-')
+            iddep = int(FiltroIncidentesDepDDL.value[:ls])
+            dato = iddep
+            consultaSql = 'SELECT FolioIncidente, TipoIncidente, FechaIncidente, VialidadIncidente, ColoniaIncidente, ReferenciaUbicacionIncidente, UbicacionIncidente, RespondienteNombreCompleto, EstatusIncidente, Municipio, NombreRegion, RazonSocial FROM Incidentes, CatMunicipio, CatRegion, CatDepositoVehicular WHERE MunicipioId=CatMunicipio.Id AND Incidentes.RegionId = CatRegion.Id AND DepositoVehicularId = CatDepositoVehicular.Id AND DepositoVehicularId = ?'
+        if idfiltro == 3:
+            ls = dato.find('-')
+            idreg = int(dato[:ls])
+            dato = idreg
+            consultaSql = 'SELECT FolioIncidente, TipoIncidente, FechaIncidente, VialidadIncidente, ColoniaIncidente, ReferenciaUbicacionIncidente, UbicacionIncidente, RespondienteNombreCompleto, EstatusIncidente, Municipio, NombreRegion, RazonSocial FROM Incidentes, CatMunicipio, CatRegion, CatDepositoVehicular WHERE MunicipioId=CatMunicipio.Id AND Incidentes.RegionId = CatRegion.Id AND DepositoVehicularId = CatDepositoVehicular.Id AND Incidentes.RegionId = ?'
+        if idfiltro == 4:
+            consultaSql = 'SELECT FolioIncidente, TipoIncidente, FechaIncidente, VialidadIncidente, ColoniaIncidente, ReferenciaUbicacionIncidente, UbicacionIncidente, RespondienteNombreCompleto, EstatusIncidente, Municipio, NombreRegion, RazonSocial FROM Incidentes, CatMunicipio, CatRegion, CatDepositoVehicular WHERE MunicipioId=CatMunicipio.Id AND Incidentes.RegionId = CatRegion.Id AND DepositoVehicularId = CatDepositoVehicular.Id AND TipoIncidente = ?'
+        incidentesDb = run_query(consultaSql, (dato,))
+        incidentesreplv.controls.clear()
+        incidentesreplv.controls.append(lista_incidentesrep)
+        generar_tabla_incidentesrep(incidentesDb)
+        page.update()
 
     def estatusIncidenteLista(anio):
+        #consultaSql = 'SELECT FolioIncidente, TipoIncidente, FechaIncidente, VialidadIncidente, ColoniaIncidente, ReferenciaUbicacionIncidente, UbicacionIncidente, RespondienteNombreCompleto, RespondienteIdentificacion, RespondienteNotas, Municipio, NombreRegion, RazonSocial, MunicipioId, Incidentes.RegionId, DepositoVehicularId FROM Incidentes, CatMunicipio, CatRegion, CatDepositoVehicular WHERE MunicipioId=CatMunicipio.Id AND Incidentes.RegionId = CatRegion.Id AND DepositoVehicularId = CatDepositoVehicular.Id AND EstatusIncidente = ?'
         consultaSql = ''' SELECT inc.Id
                                 ,RIGHT('000'+CAST(FolioIncidente AS VARCHAR(3)),3) AS FolioInciden		  
                                 ,TipoIncidente
@@ -1228,8 +1305,6 @@ def main(page: ft.Page):
                         INNER JOIN CatDepositoVehicular cdv ON inc.DepositoVehicularId = cdv.Id 
                             WHERE YEAR(FechaIncidente) = ?'''
         incidentesEstatus = run_query(consultaSql, (int(anio),))
-        # for i in incidentesEstatus:
-        #     print(i)
         EstatusIncidenteslv.controls.clear()
         EstatusIncidenteslv.controls.append(lista_estatusIncidentes)
         generar_Tabla_EstatusIncidente(incidentesEstatus)
@@ -1348,6 +1423,16 @@ def main(page: ft.Page):
                 cells.append(ft.DataCell(ft.Text(col)))
             rows.append(ft.DataRow(cells=cells, )) # on_select_changed=selectedrowDepositos
         lista_incidentes.rows = rows
+        page.update()
+
+    def generar_tabla_incidentesrep(filas):
+        rows = []
+        for fila in filas:
+            cells = []
+            for col in fila:
+                cells.append(ft.DataCell(ft.Text(col)))
+            rows.append(ft.DataRow(cells=cells, )) # on_select_changed=selectedrowDepositos
+        lista_incidentesrep.rows = rows
         page.update()
 
     
@@ -1548,7 +1633,14 @@ def main(page: ft.Page):
     def filtroEstatusIncideneAnioSeleccionado():
         try:
             textoSelect = FiltroEstatusIncidentesAnioDDL.value
-            estatusIncidenteLista(int(textoSelect))
+            estatusIncidenteLista(textoSelect)
+        except:
+            return 0
+    
+    def filtroStatusIncideneAnioSeleccionado(filtro, idfiltro):
+        try:
+            textoSelect = filtro.value
+            incidentesRepLista(textoSelect, idfiltro)
         except:
             return 0
         
@@ -1636,7 +1728,50 @@ def main(page: ft.Page):
                     content= ft.Text(str(row[0]))
                 )
             )
+    ################# drops reportes
+    def filtroIncidenteStatusDropDownList():
+        # consultaSql = 'SELECT DISTINCT(YEAR(FechaIncidente)) AS ANIOS FROM Incidentes WHERE Activo = 1'
+        # anios = run_query(consultaSql)
+        status = ['EN ARRIBO','MANIOBRA','CUSTODIA','TRASLADO','DEPOSITO','LIBERADO']
+        for row in status:
+            FiltroIncidentesStatusDDL.options.append(
+                ft.DropdownOption(
+                    key= row,
+                    content= ft.Text(row)
+                )
+            )
 
+    def filtroIncidenteDepDropDownList():
+        consultaSql = 'SELECT Id, RazonSocial FROM CatDepositoVehicular'
+        anios = run_query(consultaSql)
+        for row in anios:
+            FiltroIncidentesDepDDL.options.append(
+                ft.DropdownOption(
+                    key= (str(row[0])+'-'+row[1]),
+                    content= ft.Text(str(row[0])+'-'+row[1])
+                )
+            )
+
+    def filtroIncidenteRegDropDownList():
+        consultaSql = 'SELECT Id, NombreRegion FROM CatRegion'
+        anios = run_query(consultaSql)
+        for row in anios:
+            FiltroIncidentesRegDDL.options.append(
+                ft.DropdownOption(
+                    key= (str(row[0])+'-'+row[1]),
+                    content= ft.Text(str(row[0])+'-'+row[1])
+                )
+            )
+    
+    def filtroIncidenteTIDropDownList():
+        Tipo_Inc = ['FALTA ADMINISTRATIVA', 'HECHO DELICTIVO', 'INCIDENTE DE TRANSITO']
+        for row in Tipo_Inc:
+            FiltroIncidentesTIDDL.options.append(
+                ft.DropdownOption(
+                    key= (row),
+                    content= ft.Text(row)
+                )
+            )
     
     def filtroEstatusIncidenteAniosDropDownList():
         consultaSql = 'SELECT DISTINCT(YEAR(FechaIncidente)) AS ANIOS FROM Incidentes WHERE Activo = 1'
@@ -2247,7 +2382,12 @@ def main(page: ft.Page):
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     ObservacionesdelVehiculo = ft.TextField(label='OBSERVACIONES', width=900, visible= False)
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    #########################FILTROS REPORTES #############################################################
     FiltroIncidentesAnioDDL = Dropdown(label= 'AÑO', width=250, enable_filter= True, editable= True, on_change=lambda _:filtroIncideneAnioSeleccionado())
+    FiltroIncidentesStatusDDL = Dropdown(label= 'Estatus', width=250, enable_filter= True, editable= True, on_change=lambda _:filtroStatusIncideneAnioSeleccionado(FiltroIncidentesStatusDDL,1))
+    FiltroIncidentesDepDDL = Dropdown(label= 'Deposito', width=450, enable_filter= True, editable= True, on_change=lambda _:filtroStatusIncideneAnioSeleccionado(FiltroIncidentesDepDDL,2))
+    FiltroIncidentesRegDDL = Dropdown(label= 'Region', width=250, enable_filter= True, editable= True, on_change=lambda _:filtroStatusIncideneAnioSeleccionado(FiltroIncidentesRegDDL,3))
+    FiltroIncidentesTIDDL = Dropdown(label= 'Tipo de Incidente', width=250, enable_filter= True, editable= True, on_change=lambda _:filtroStatusIncideneAnioSeleccionado(FiltroIncidentesTIDDL,4))
     FiltroEstatusIncidentesAnioDDL = Dropdown(label= 'AÑO', width=250, enable_filter= True, editable= True, on_change=lambda _:filtroEstatusIncideneAnioSeleccionado())    
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     DatosIncidentesTxt = ft.TextField(label='Datos del incidente', width=600, visible= True, read_only= False)
@@ -2255,6 +2395,7 @@ def main(page: ft.Page):
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     #textosControles
     textoGuardar = ft.Text(value='GUARDAR', size=13)
+    textoBuscar = ft.Text(value='BUSCAR', size=13)
     textoEditar = ft.Text(value='EDITAR', size=13)
     textoCancelar = ft.Text(value='CANCELAR', size=13)
     textoAgregarVehiculoIncidente = ft.Text(value='VER VEHICULOS INVOLUCRADOS', size=13)
@@ -2290,6 +2431,7 @@ def main(page: ft.Page):
     btnAgregarRegistro = ft.CupertinoFilledButton(content=textoGuardar, width=180, height=55, opacity_on_click=0.3, border_radius=10, visible = True) # , on_click=lambda _:regionesAdd()
     btnEditarRegistro = ft.CupertinoFilledButton(content=textoEditar, width=180, height=55, opacity_on_click=0.3, border_radius=10, visible = False) # , on_click=lambda _:regionesUpdate()    
     btnCancelarAccionForm = ft.CupertinoFilledButton(content=textoCancelar, width=180, height=55, opacity_on_click=0.3, border_radius=10, visible = False) # , on_click=lambda _:regionesAdd()
+    btnBuscarRegistro = ft.CupertinoFilledButton(content=textoBuscar, width=180, height=55, opacity_on_click=0.3, border_radius=10, visible = True, on_click=lambda _:depositosBuscaLista())
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     btnAgregarVehiculoIncidente = ft.CupertinoFilledButton(content=textoAgregarVehiculoIncidente, width=180, height=50, opacity_on_click=0.3, border_radius=10, visible = True)
     btnDatosIncidente = ft.CupertinoFilledButton(content=textoDatosIncidente, width=180, height=50, opacity_on_click=0.3, border_radius=10, visible = False)
@@ -2496,7 +2638,7 @@ def main(page: ft.Page):
             ),
             ft.Row(
                 # vertical_alignment= ft.CrossAxisAlignment.START,
-                controls= [btnAgregarRegistro, btnEditarRegistro, btnCancelarAccionForm]
+                controls= [btnAgregarRegistro, btnEditarRegistro, btnCancelarAccionForm, btnBuscarRegistro]
             ),
             ft.Row(
                 # vertical_alignment= ft.CrossAxisAlignment.CENTER,
@@ -2660,15 +2802,24 @@ def main(page: ft.Page):
         encabezado = ft.Text('INCIDENTES REGISTRADOS', size= 30)
         page.add(encabezado)
 
-        FiltroIncidentesAnioDDL.options = []
-        FiltroIncidentesAnioDDL.key = []
-        filtroIncidenteAniosDropDownList()
+        # FiltroIncidentesAnioDDL.options = []
+        # FiltroIncidentesAnioDDL.key = []
+        # filtroIncidenteAniosDropDownList()
 
-        fecha_actual = dt.date.today() # datetime.date.today()
-        anio_actual = fecha_actual.year
-        FiltroIncidentesAnioDDL.value = anio_actual
+        # fecha_actual = dt.date.today() # datetime.date.today()
+        # anio_actual = fecha_actual.year
+        # FiltroIncidentesAnioDDL.value = anio_actual
 
-        incidentesLista(anio_actual)
+        FiltroIncidentesStatusDDL.options = []
+        FiltroIncidentesStatusDDL.key = []
+
+        FiltroIncidentesTIDDL.options = []
+        FiltroIncidentesTIDDL.key = []
+
+        filtroIncidenteStatusDropDownList()
+        filtroIncidenteDepDropDownList()
+        filtroIncidenteRegDropDownList()
+        filtroIncidenteTIDropDownList()
 
         page.add(
             ft.Row(
@@ -2677,7 +2828,7 @@ def main(page: ft.Page):
                         controls=[
                             ft.Column(
                                 controls=[
-                                    ft.Row(controls=[FiltroIncidentesAnioDDL])                                                                                                       
+                                    ft.Row(controls=[FiltroIncidentesStatusDDL, FiltroIncidentesDepDDL, FiltroIncidentesRegDDL, FiltroIncidentesTIDDL])                                                                                                       
                                 ]
                             )
                         ]
@@ -2689,10 +2840,10 @@ def main(page: ft.Page):
                 controls=[
                     ft.Container(
                         ft.Container(
-                            width=800,
+                            width=1900,
                             height=650,
                             alignment=ft.Alignment(0.0, 0.0),
-                            content= incidenteslv
+                            content= incidentesreplv
                         )
                     )
                 ]
