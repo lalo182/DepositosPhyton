@@ -108,6 +108,24 @@ def main(page: ft.Page):
     page.theme_mode = ft.ThemeMode.LIGHT
     page.theme = ft.Theme(navigation_bar_theme=ft.NavigationBarTheme(bgcolor='#5F1B2D', label_text_style= ft.TextStyle(color=ft.Colors.WHITE)))
     
+    ####### BANNER
+    action_button_style = ft.ButtonStyle(color=ft.Colors.TRANSPARENT)
+    banner = ft.Banner(
+        bgcolor="#5f1b2d",     
+        divider_color=ft.Colors.TRANSPARENT,
+        content=ft.Container(
+            content=ft.Image(src='assets/logo.png', height=100),
+            image=ft.DecorationImage(src='assets/Textura1.png', repeat=ft.ImageRepeat.REPEAT_X,),
+            expand=True
+        ),
+        actions=[
+            ft.TextButton(
+                text="", style=action_button_style, disabled=True, width=1
+            ),
+        ],
+
+    )
+
     # page.bgcolor = ft.Colors.LIGHT_BLUE_100 # ft.Colors.BLUE_GREY_800
     page.title = 'DEPOSITOS VEHICULARES'
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
@@ -1206,7 +1224,7 @@ def main(page: ft.Page):
         page.update()
 
     def depositosBuscaLista():# busqueda en lista de municipios
-        if municipioSelectRegion.value == '' and RazonSocial.value == '' and RepresentanteLegal.value=='':
+        if municipioSelectRegion.value == None and len(RazonSocial.value) == 0 and len(RepresentanteLegal.value)==0:
             alerta('AVISO', 'No hay criterios de busqueda')
         else:
             if RazonSocial.value == '' and RepresentanteLegal.value=='':
@@ -1219,9 +1237,9 @@ def main(page: ft.Page):
                                     FROM CatDepositoVehicular cdv 
                                 INNER JOIN CatRegion cr ON cdv.RegionId = cr.Id
                                 WHERE  RegionId = ?'''
-                ls = (RazonSocial.value).find('-')
-                idr = int(RazonSocial.value[:ls])
-                depositosDb = run_query(consultaSql(idr,))
+                ls = (municipioSelectRegion.value).find('-')
+                idr = int(municipioSelectRegion.value[:ls])
+                depositosDb = run_query(consultaSql,(int(idr),))
                 lv.controls.clear()
                 lv.controls.append(lista_depositos)
                 generar_tabla_depositos(depositosDb)
@@ -1235,9 +1253,9 @@ def main(page: ft.Page):
                                     FROM CatDepositoVehicular cdv 
                                 INNER JOIN CatRegion cr ON cdv.RegionId = cr.Id
                                 WHERE RazonSocial LIKE '%'''+RazonSocial.value+'''%' OR RepresentanteLegal LIKE '%'''+RepresentanteLegal.value+'''%' OR RegionId = ?'''
-                ls = (RazonSocial.value).find('-')
-                idr = int(RazonSocial.value[:ls])
-                depositosDb = run_query(consultaSql(idr,))
+                ls = (municipioSelectRegion.value).find('-')
+                idr = int(municipioSelectRegion.value[:ls])
+                depositosDb = run_query(consultaSql,(int(idr),))
                 lv.controls.clear()
                 lv.controls.append(lista_depositos)
                 generar_tabla_depositos(depositosDb)
@@ -2930,9 +2948,8 @@ def main(page: ft.Page):
         animation_duration=1
     )
 
-
     page.navigation_bar = barradeNavegacion
     show_CatRegiones()
-
+    page.open(banner)
 
 ft.app(target= main, )  # # # view= ft.WEB_BROWSER
