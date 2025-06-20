@@ -110,20 +110,24 @@ def main(page: ft.Page):
     
     ####### BANNER
     action_button_style = ft.ButtonStyle(color=ft.Colors.TRANSPARENT)
+    button_style = ft.ButtonStyle(color='#3D9B84', text_style=ft.TextStyle(color=ft.Colors.WHITE))
+    button_style2 = ft.ButtonStyle(color='#B33449', text_style=ft.TextStyle(color=ft.Colors.WHITE))
     banner = ft.Banner(
-        bgcolor="#5f1b2d",     
+        bgcolor="#5f1b2d", 
+        #bgcolor="#11312d",    
         divider_color=ft.Colors.TRANSPARENT,
         content=ft.Container(
-            content=ft.Image(src='assets/logo.png', height=100),
-            image=ft.DecorationImage(src='assets/Textura1.png', repeat=ft.ImageRepeat.REPEAT_X,),
-            expand=True
+            content=ft.Image(src='assets/logo2.png', height=100),
+            image=ft.DecorationImage(src='assets/Textura.png', alignment=ft.Alignment(-1.0, 0.0)),
+            expand=True,
+            alignment=ft.Alignment(-1.0, 0.0),
+            margin=10
         ),
         actions=[
             ft.TextButton(
                 text="", style=action_button_style, disabled=True, width=1
             ),
         ],
-
     )
 
     # page.bgcolor = ft.Colors.LIGHT_BLUE_100 # ft.Colors.BLUE_GREY_800
@@ -403,8 +407,8 @@ def main(page: ft.Page):
             title=ft.Text(titulo),
             content=ft.Text(mensaje),
             actions=[
-                ft.TextButton("Si", on_click= lambda _: funcionsi(dlg)),
-                ft.TextButton("No", on_click=lambda _: funcion_no(dlg)),
+                ft.TextButton("Si", on_click= lambda _: funcionsi(dlg), style=button_style),
+                ft.TextButton("No", on_click=lambda _: funcion_no(dlg), style=button_style2),
             ]
         )
         page.open(dlg)
@@ -887,12 +891,13 @@ def main(page: ft.Page):
     )
 
 
-    btn_guardar = ft.CupertinoFilledButton(
-        'Guardar',
+    btn_guardar = ft.CupertinoButton(
+        content=ft.Text(value='GUARDAR', color=ft.Colors.WHITE, size=15), 
         width=180,
         height=50,
         opacity_on_click=0.3, 
-        border_radius=10, 
+        border_radius=10,
+        bgcolor='#3D9B84',
         on_click=lambda _:guardar_rol()
     )
 
@@ -2362,7 +2367,7 @@ def main(page: ft.Page):
     Colonia = ft.TextField(label='COLONIA *', width=250)
     Referencia = ft.TextField(label='REFERENCIA', width=400)
     UbicacionIncidente = ft.TextField(label='UBICACION (MAPS) *', width=420)
-    btn_buscaub = ft.ElevatedButton("Buscar Info", on_click= lambda _:busca_infoub())
+    btn_buscaub = ft.ElevatedButton(content=ft.Text(value='Buscar Info', color=ft.Colors.WHITE, size=13), on_click= lambda _:busca_infoub(), bgcolor='#E2BE96')
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
     MunicipioDDL = Dropdown(label= 'MUNICIPIO *', width=400, enable_filter= True, editable= True, on_change=lambda _:municipioIncidenteSeleccionado())
     RegionTxt = ft.TextField(label='REGIÓN', width=450, read_only=True)
@@ -2412,15 +2417,15 @@ def main(page: ft.Page):
     EstatusAdministracionDDL = Dropdown(label= 'Estatus *', width=250, enable_filter= True, editable= True)
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     #textosControles
-    textoGuardar = ft.Text(value='GUARDAR', size=13)
-    textoBuscar = ft.Text(value='BUSCAR', size=13)
-    textoEditar = ft.Text(value='EDITAR', size=13)
-    textoCancelar = ft.Text(value='CANCELAR', size=13)
-    textoAgregarVehiculoIncidente = ft.Text(value='VER VEHICULOS INVOLUCRADOS', size=13)
-    textoDatosIncidente = ft.Text(value='DATOS DEL INCIDENTE', size=13)
-    textoVehiculosAdd = ft.Text(value='AGREGAR A LA LISTA', size=13)
-    textoVehiculosUpd = ft.Text(value='EDITAR INFORMACIÓN', size=13)
-    textoActualizarEstatus = ft.Text(value='ACTUALIZAR ESTATUS', size=13)
+    textoGuardar = ft.Text(value='GUARDAR', size=13, color=ft.Colors.WHITE)
+    textoBuscar = ft.Text(value='BUSCAR', size=13, color=ft.Colors.WHITE)
+    textoEditar = ft.Text(value='EDITAR', size=13, color=ft.Colors.WHITE)
+    textoCancelar = ft.Text(value='CANCELAR', size=13, color=ft.Colors.WHITE)
+    textoAgregarVehiculoIncidente = ft.Text(value='VER VEHICULOS INVOLUCRADOS', size=13, color=ft.Colors.WHITE)
+    textoDatosIncidente = ft.Text(value='DATOS DEL INCIDENTE', size=13, color=ft.Colors.WHITE)
+    textoVehiculosAdd = ft.Text(value='AGREGAR A LA LISTA', size=13, color=ft.Colors.WHITE)
+    textoVehiculosUpd = ft.Text(value='EDITAR INFORMACIÓN', size=13, color=ft.Colors.WHITE)
+    textoActualizarEstatus = ft.Text(value='ACTUALIZAR ESTATUS', size=13, color=ft.Colors.WHITE)
 
     # Controles mapa
     visor_map = ft.InteractiveViewer(
@@ -2446,17 +2451,17 @@ def main(page: ft.Page):
 
 
     # BOTONES
-    btnAgregarRegistro = ft.CupertinoFilledButton(content=textoGuardar, width=180, height=55, opacity_on_click=0.3, border_radius=10, visible = True) # , on_click=lambda _:regionesAdd()
-    btnEditarRegistro = ft.CupertinoFilledButton(content=textoEditar, width=180, height=55, opacity_on_click=0.3, border_radius=10, visible = False) # , on_click=lambda _:regionesUpdate()    
-    btnCancelarAccionForm = ft.CupertinoFilledButton(content=textoCancelar, width=180, height=55, opacity_on_click=0.3, border_radius=10, visible = False) # , on_click=lambda _:regionesAdd()
-    btnBuscarRegistro = ft.CupertinoFilledButton(content=textoBuscar, width=180, height=55, opacity_on_click=0.3, border_radius=10, visible = True, on_click=lambda _:depositosBuscaLista())
+    btnAgregarRegistro = ft.CupertinoButton(content=textoGuardar, width=180, height=55, opacity_on_click=0.3, border_radius=10, visible = True, bgcolor='#3D9B84') # , on_click=lambda _:regionesAdd()
+    btnEditarRegistro = ft.CupertinoButton(content=textoEditar, width=180, height=55, opacity_on_click=0.3, border_radius=10, visible = False, bgcolor='#B2B2B1') # , on_click=lambda _:regionesUpdate()    
+    btnCancelarAccionForm = ft.CupertinoButton(content=textoCancelar, width=180, height=55, opacity_on_click=0.3, border_radius=10, visible = False, bgcolor='#B33449') # , on_click=lambda _:regionesAdd()
+    btnBuscarRegistro = ft.CupertinoButton(content=textoBuscar, width=180, height=55, opacity_on_click=0.3, border_radius=10, visible = True, bgcolor='#E2BE96', on_click=lambda _:depositosBuscaLista())
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    btnAgregarVehiculoIncidente = ft.CupertinoFilledButton(content=textoAgregarVehiculoIncidente, width=180, height=50, opacity_on_click=0.3, border_radius=10, visible = True)
-    btnDatosIncidente = ft.CupertinoFilledButton(content=textoDatosIncidente, width=180, height=50, opacity_on_click=0.3, border_radius=10, visible = False)
-    btnVehiculoInvolucradoAdd = ft.CupertinoFilledButton(content=textoVehiculosAdd, width=180, height=50, opacity_on_click=0.3, border_radius=10, visible= False)
-    btnVehiculoInvolucradoUpd = ft.CupertinoFilledButton(content=textoVehiculosUpd, width=180, height=50, opacity_on_click=0.3, border_radius=10, visible= False, on_click= lambda _:vehiculoDatosUpdate())
+    btnAgregarVehiculoIncidente = ft.CupertinoButton(content=textoAgregarVehiculoIncidente, width=180, height=50, opacity_on_click=0.3, border_radius=10, visible = True, bgcolor='#3D9B84')
+    btnDatosIncidente = ft.CupertinoButton(content=textoDatosIncidente, width=180, height=50, opacity_on_click=0.3, border_radius=10, visible = False, bgcolor='#E2BE96')
+    btnVehiculoInvolucradoAdd = ft.CupertinoButton(content=textoVehiculosAdd, width=180, height=50, opacity_on_click=0.3, border_radius=10, visible= False, bgcolor='#3D9B84')
+    btnVehiculoInvolucradoUpd = ft.CupertinoButton(content=textoVehiculosUpd, width=180, height=50, opacity_on_click=0.3, border_radius=10, visible= False, on_click= lambda _:vehiculoDatosUpdate(), bgcolor='#E2BE96')
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    btnActualizarEstatus = ft.CupertinoFilledButton(content=textoActualizarEstatus, width=180, height=50, opacity_on_click=0.3, border_radius=10, visible= False, on_click= lambda _:estatusIncidenteUpdate())
+    btnActualizarEstatus = ft.CupertinoButton(content=textoActualizarEstatus, width=180, height=50, opacity_on_click=0.3, border_radius=10, visible= False, on_click= lambda _:estatusIncidenteUpdate(), bgcolor='#B2B2B1')
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 
