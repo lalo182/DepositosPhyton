@@ -7,6 +7,7 @@ import flet_map as map
 import requests
 from bs4 import BeautifulSoup
 from geopy.geocoders import Nominatim
+import colorsys
 
 
 from flet import *
@@ -117,7 +118,7 @@ def main(page: ft.Page):
         #bgcolor="#11312d",    
         divider_color=ft.Colors.TRANSPARENT,
         content=ft.Container(
-            content=ft.Image(src='assets/logo2.png', height=100),
+            content=ft.Image(src='assets/logo_gruas3.png', height=100),
             image=ft.DecorationImage(src='assets/Textura.png', alignment=ft.Alignment(-1.0, 0.0)),
             expand=True,
             alignment=ft.Alignment(-1.0, 0.0),
@@ -301,17 +302,32 @@ def main(page: ft.Page):
     colors=[
         "#912743", 
         '#C79B66',
+        '#dd1d3e',
         '#B2B2B1', 
+        '#4cb185',
         '#17302D', 
         '#861E34', 
         '#E2BE96',
         '#ECECEC', 
         '#246257', 
         "#B33449", 
-        '#FFFDED', 
+        '#FFFDED',
+        '#e2af72',
         '#3D9B84', 
         '#484747',
+        '#c0234c',
+        '#ac875b',
+        '#26473a',
+        '#ede0b8',
+        '#898787'
     ]
+
+    def es_color_oscuro(hex_color, umbral=0.4): #Indica si un color hexadecimal es oscuro
+        hex_color = hex_color.lstrip('#')
+        r_hex, g_hex, b_hex = hex_color[0:2], hex_color[2:4], hex_color[4:6]
+        r, g, b = int(r_hex, 16), int(g_hex, 16), int(b_hex, 16)
+        h, l, s = colorsys.rgb_to_hls(r/255.0, g/255.0, b/255.0)
+        return l < umbral
 
     global mes
     global anio
@@ -620,6 +636,8 @@ def main(page: ft.Page):
                 if pos>=din and pos<=dfi and dia.bgcolor==ft.Colors.BLUE_GREY_500 or dia.bgcolor==ft.Colors.GREEN_ACCENT_400: # marca rango seleccionado
                     dia.bgcolor = color
                     dia.on_click = clickeable
+                    if es_color_oscuro(color):
+                        (dia.content).color = ft.Colors.WHITE
         page.update()
 
 
@@ -634,8 +652,6 @@ def main(page: ft.Page):
     def consulta_rol(region):
         global mes
         global anio
-        print(mes)
-        print(anio)
         
         query_rol = 'SELECT * FROM [dbo].[Reg_Roles] WHERE ANIO=? AND MES=? AND regid=? AND act=1'
         listdep = run_query(query_rol, (anio, mes, region,))
@@ -658,6 +674,8 @@ def main(page: ft.Page):
                         pos = (dia.content.value)
                         if pos in days: # marca rango seleccionado
                             dia.bgcolor = color_act
+                            if es_color_oscuro(color_act):
+                                (dia.content).color = ft.Colors.WHITE
                         
                 colors.remove(color_act)
 
@@ -2045,7 +2063,7 @@ def main(page: ft.Page):
                 if parametro > 10:
                     observacionesVehiculoVal = True
 
-        if (len(tipoVehiculoVal) > 0 and len(tipoGruaVal) > 0 and len(noPlacasVal) > 0 and
+        if (tipoVehiculoVal != None  and tipoGruaVal != None and len(noPlacasVal) > 0 and
            len(lineaVal) > 0 and len(colorVal) > 0 and observacionesVehiculoVal):
             
             origenPlacasId = origenPlacasSeleccionado()
@@ -2063,6 +2081,8 @@ def main(page: ft.Page):
             page.update()
         else:
             alerta('AVISO', 'FALTAN CAMPOS POR LLENAR')
+            btnVehiculoInvolucradoAdd.disabled = False
+            page.update()
         
 
     def vehiculoDatosUpdate():
