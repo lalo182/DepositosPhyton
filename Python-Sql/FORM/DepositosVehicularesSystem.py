@@ -118,8 +118,8 @@ def main(page: ft.Page):
         #bgcolor="#11312d",    
         divider_color=ft.Colors.TRANSPARENT,
         content=ft.Container(
-            content=ft.Image(src='assets/logo_gruas3.png', height=100),
-            image=ft.DecorationImage(src='assets/Textura.png', alignment=ft.Alignment(-1.0, 0.0)),
+            content=ft.Image(src=f'logo_gruas3.png', height=60),
+            image=ft.DecorationImage(src=f'Textura.png', alignment=ft.Alignment(-1.0, 0.0)),
             expand=True,
             alignment=ft.Alignment(-1.0, 0.0),
             margin=10
@@ -917,7 +917,7 @@ def main(page: ft.Page):
 
     drop_depositos = ft.Dropdown( # lista desplegable depositos
         editable=True,
-        label='Deposito:',
+        label='DEPÓSITO:',
         options=[],
         text_align=ft.TextAlign.CENTER,
         width=350,
@@ -927,7 +927,7 @@ def main(page: ft.Page):
 
     drop_region = ft.Dropdown( # lista desplegable regiones
         editable=True,
-        label='Region:',
+        label='REGIÓN:',
         # options=reg_options(),
         text_align=ft.TextAlign.CENTER,
         width=350,
@@ -1170,7 +1170,7 @@ def main(page: ft.Page):
         columns=[
             ft.DataColumn(ft.Text('ID')),
             ft.DataColumn(ft.Text('REGIÓN')),
-            ft.DataColumn(ft.Text('ESTATUS'))
+            ft.DataColumn(ft.Text('DISPONIBLE'))
         ], rows=[],
     )
 
@@ -1179,7 +1179,7 @@ def main(page: ft.Page):
         columns=[
             ft.DataColumn(ft.Text('ID')),
             ft.DataColumn(ft.Text('MUNICIPIO')),
-            ft.DataColumn(ft.Text('REGION'))
+            ft.DataColumn(ft.Text('REGIÓN'))
         ], rows=[]
     ) 
 
@@ -1204,10 +1204,10 @@ def main(page: ft.Page):
             ft.DataColumn(ft.Text('FECHA')),
             ft.DataColumn(ft.Text('VIALIDAD')),
             ft.DataColumn(ft.Text('COLONIA')),
-            ft.DataColumn(ft.Text('UBICACION (LINK MAPS)')),
+            ft.DataColumn(ft.Text('UBICACIÓN (LINK MAPS)')),
             ft.DataColumn(ft.Text('ESTATUS')),
             ft.DataColumn(ft.Text('MUNICIPIO')),
-            ft.DataColumn(ft.Text('RAZON SOCIAL')),
+            ft.DataColumn(ft.Text('RAZÓN SOCIAL')),
             ft.DataColumn(ft.Text('INVOLUCRADOS'))
         ], rows=[]
     )
@@ -1220,12 +1220,12 @@ def main(page: ft.Page):
             ft.DataColumn(ft.Text('VIALIDAD')),
             ft.DataColumn(ft.Text('COLONIA')),
             ft.DataColumn(ft.Text('REFERENCIA')),
-            ft.DataColumn(ft.Text('UBICACION (LINK MAPS)')),
+            ft.DataColumn(ft.Text('UBICACIÓN (LINK MAPS)')),
             ft.DataColumn(ft.Text('RESPONDIENTE')),
             ft.DataColumn(ft.Text('ESTATUS')),
             ft.DataColumn(ft.Text('MUNICIPIO')),
-            ft.DataColumn(ft.Text('REGION')),
-            ft.DataColumn(ft.Text('DEPOSITO'))
+            ft.DataColumn(ft.Text('REGIÓN')),
+            ft.DataColumn(ft.Text('DEPÓSITO'))
         ], rows=[]
     )
 
@@ -1239,7 +1239,7 @@ def main(page: ft.Page):
             ft.DataColumn(ft.Text('VIALIDAD')),
             ft.DataColumn(ft.Text('COLONIA')),
             ft.DataColumn(ft.Text('MUNICIPIO')),
-            ft.DataColumn(ft.Text('DEPOSITO')),
+            ft.DataColumn(ft.Text('DEPÓSITO')),
             ft.DataColumn(ft.Text('RESPONDIENTE'))
         ]
     )
@@ -1474,7 +1474,10 @@ def main(page: ft.Page):
         for fila in filas:
             cells = [] 
             for col in fila:
-                cells.append(ft.DataCell(ft.Text(col)))
+                if (col == True or col == False) and len(cells)>0:
+                    cells.append(ft.DataCell(content=ft.Checkbox(value=col, disabled=True)))
+                else:
+                    cells.append(ft.DataCell(ft.Text(col)))
             rows.append(ft.DataRow(cells=cells, on_select_changed=selectedrow))
         lista_regiones.rows = rows
         page.update()
@@ -1820,7 +1823,7 @@ def main(page: ft.Page):
     def filtroIncidenteStatusDropDownList():
         # consultaSql = 'SELECT DISTINCT(YEAR(FechaIncidente)) AS ANIOS FROM Incidentes WHERE Activo = 1'
         # anios = run_query(consultaSql)
-        status = ['EN ARRIBO','MANIOBRA','CUSTODIA','TRASLADO','DEPOSITO','LIBERADO']
+        status = ['EN ARRIBO','MANIOBRA','CUSTODIA','TRASLADO','DEPÓSITO','LIBERADO']
         for row in status:
             FiltroIncidentesStatusDDL.options.append(
                 ft.DropdownOption(
@@ -2400,8 +2403,8 @@ def main(page: ft.Page):
 
     # CONTROLES PARA EL FORMULARIO DE REGIONES
     regionId = ft.TextField(label='Id', width=70, read_only=True, height= 35, text_size=12)
-    regionNombre = ft.TextField(label='Region', width=280, height= 35, text_size=12)
-    regionActivo = ft.Checkbox(label='Disponible', visible= False) 
+    regionNombre = ft.TextField(label='REGIÓN', width=280, height= 35, text_size=12)
+    regionActivo = ft.Checkbox(label='DISPONIBLE', visible= False) 
     
     # CONTROLES PARA EL FORMULARIO DE MUNICIPIOS
     municipioIdProp = ft.TextField(label='Id', width= 70, height= 35, text_size=12, read_only= True)
@@ -2410,13 +2413,13 @@ def main(page: ft.Page):
     
     # CONTROLES PARA EL FORMULARIO DE DEPOSITOS
     Id = ft.TextField(label='Id', width= 70, height= 35, text_size=12, read_only= True)
-    RazonSocial = ft.TextField(label='RAZON SOCIAL', width= 700, height= 35, text_size=12)
+    RazonSocial = ft.TextField(label='RAZÓN SOCIAL', width= 700, height= 35, text_size=12)
     RepresentanteLegal = ft.TextField(label='REPRESENTANTE LEGAL', width= 405, height= 35, text_size=12)
     NombreCompletoContactos = ft.TextField(label='NOMBRE DE CONTACTO', width= 405, height= 35, text_size=12)
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-    CorreoElectronicoContacto = ft.TextField(label='CORREO ELECTRONICO', width= 300, height= 35, text_size=12)
-    Telefonos = ft.TextField(label='TELEFONO(S)', width= 500, height= 35, text_size=12)
-    Ubicacion = ft.TextField(label='UBICACION (MAPS)', width=500)    
+    CorreoElectronicoContacto = ft.TextField(label='CORREO ELECTRÓNICO', width= 300, height= 35, text_size=12)
+    Telefonos = ft.TextField(label='TELÉFONO(S)', width= 500, height= 35, text_size=12)
+    Ubicacion = ft.TextField(label='UBICACIÓN (MAPS)', width=500)    
     Latitud = ft.TextField(label='LATITUD', width=250)
     Longitud = ft.TextField(label='LONGITUD', width=250)     
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
@@ -2433,18 +2436,18 @@ def main(page: ft.Page):
     Vialidad = ft.TextField(label='VIALIDAD *', width=350) 
     Colonia = ft.TextField(label='COLONIA *', width=250)
     Referencia = ft.TextField(label='REFERENCIA', width=400)
-    UbicacionIncidente = ft.TextField(label='UBICACION (MAPS) *', width=420)
+    UbicacionIncidente = ft.TextField(label='UBICACIÓN (MAPS) *', width=420)
     btn_buscaub = ft.ElevatedButton(content=ft.Text(value='Buscar Info', color=ft.Colors.WHITE, size=13), on_click= lambda _:busca_infoub(), bgcolor='#E2BE96')
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
     MunicipioDDL = Dropdown(label= 'MUNICIPIO *', width=400, enable_filter= True, editable= True, on_change=lambda _:municipioIncidenteSeleccionado())
     RegionTxt = ft.TextField(label='REGIÓN', width=450, read_only=True)
-    DepositoDDL = Dropdown(label= 'DEPOSITO', width=650, enable_filter= True, editable= True)
+    DepositoDDL = Dropdown(label= 'DEPÓSITO', width=650, enable_filter= True, editable= True)
     CambioDDL = ft.Checkbox(label='Atendido', visible= False, on_change=cambioDep, value=True)
     notaCambio = ft.TextField(label='Nota', width=400, on_change= lambda e:valid_lon(e,btnAceptcmb))
     btnAceptcmb = ft.TextButton("Aceptar", disabled=True)
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
     RespondienteNombreCompleto = ft.TextField(label='NOMBRE COMPLETO DE RESPONDIENTE *', width= 700)
-    RespondienteIdentificacion = ft.TextField(label='IDENTIFICACIÓN DE RSPONDIENTE *', width= 300)
+    RespondienteIdentificacion = ft.TextField(label='IDENTIFICACIÓN DE RESPONDIENTE *', width= 300)
     NotaRespondiente = ft.TextField(label='NOTA DE RESPONDIENTE', width= 1010)
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
     Folio911 = ft.TextField(label='FOLIO DE 911', width=200)
@@ -2474,10 +2477,10 @@ def main(page: ft.Page):
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     #########################FILTROS REPORTES #############################################################
     FiltroIncidentesAnioDDL = Dropdown(label= 'AÑO', width=250, enable_filter= True, editable= True, on_change=lambda _:filtroIncideneAnioSeleccionado())
-    FiltroIncidentesStatusDDL = Dropdown(label= 'Estatus', width=250, enable_filter= True, editable= True, on_change=lambda _:filtroStatusIncideneAnioSeleccionado(FiltroIncidentesStatusDDL,1))
-    FiltroIncidentesDepDDL = Dropdown(label= 'Deposito', width=450, enable_filter= True, editable= True, on_change=lambda _:filtroStatusIncideneAnioSeleccionado(FiltroIncidentesDepDDL,2))
-    FiltroIncidentesRegDDL = Dropdown(label= 'Region', width=250, enable_filter= True, editable= True, on_change=lambda _:filtroStatusIncideneAnioSeleccionado(FiltroIncidentesRegDDL,3))
-    FiltroIncidentesTIDDL = Dropdown(label= 'Tipo de Incidente', width=250, enable_filter= True, editable= True, on_change=lambda _:filtroStatusIncideneAnioSeleccionado(FiltroIncidentesTIDDL,4))
+    FiltroIncidentesStatusDDL = Dropdown(label= 'ESTATUS', width=250, enable_filter= True, editable= True, on_change=lambda _:filtroStatusIncideneAnioSeleccionado(FiltroIncidentesStatusDDL,1))
+    FiltroIncidentesDepDDL = Dropdown(label= 'DEPÓSITO', width=450, enable_filter= True, editable= True, on_change=lambda _:filtroStatusIncideneAnioSeleccionado(FiltroIncidentesDepDDL,2))
+    FiltroIncidentesRegDDL = Dropdown(label= 'REGIÓN', width=250, enable_filter= True, editable= True, on_change=lambda _:filtroStatusIncideneAnioSeleccionado(FiltroIncidentesRegDDL,3))
+    FiltroIncidentesTIDDL = Dropdown(label= 'TIPO DE INCIDENTE', width=250, enable_filter= True, editable= True, on_change=lambda _:filtroStatusIncideneAnioSeleccionado(FiltroIncidentesTIDDL,4))
     FiltroEstatusIncidentesAnioDDL = Dropdown(label= 'AÑO', width=250, enable_filter= True, editable= True, on_change=lambda _:filtroEstatusIncideneAnioSeleccionado())    
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     DatosIncidentesTxt = ft.TextField(label='Datos del incidente', width=600, visible= True, read_only= False)
@@ -2488,7 +2491,7 @@ def main(page: ft.Page):
     textoBuscar = ft.Text(value='BUSCAR', size=13, color=ft.Colors.WHITE)
     textoEditar = ft.Text(value='EDITAR', size=13, color=ft.Colors.WHITE)
     textoCancelar = ft.Text(value='CANCELAR', size=13, color=ft.Colors.WHITE)
-    textoAgregarVehiculoIncidente = ft.Text(value='VER VEHICULOS INVOLUCRADOS', size=13, color=ft.Colors.WHITE)
+    textoAgregarVehiculoIncidente = ft.Text(value='VER VEHÍCULOS INVOLUCRADOS', size=13, color=ft.Colors.WHITE)
     textoDatosIncidente = ft.Text(value='DATOS DEL INCIDENTE', size=13, color=ft.Colors.WHITE)
     textoVehiculosAdd = ft.Text(value='AGREGAR A LA LISTA', size=13, color=ft.Colors.WHITE)
     textoVehiculosUpd = ft.Text(value='EDITAR INFORMACIÓN', size=13, color=ft.Colors.WHITE)
@@ -2514,7 +2517,7 @@ def main(page: ft.Page):
     )
 
 
-    btn_map = ft.ElevatedButton("Ver ubicacion", on_click= lambda _:abrir_mapa())
+    btn_map = ft.ElevatedButton("Ver ubicación", on_click= lambda _:abrir_mapa())
 
 
     # BOTONES
@@ -2557,6 +2560,7 @@ def main(page: ft.Page):
     def show_CatRegiones():
         page.controls.clear()
         encabezado = ft.Text('CATÁLOGO DE REGIONES', size= 30)
+        btnAgregarRegistro.visible=True
         btnAgregarRegistro.on_click = lambda _:regionesAdd()
         btnEditarRegistro.on_click = lambda _:regionesUpdate()
         btnCancelarAccionForm.on_click = lambda _:botonesCancelarAccionForm()
@@ -2604,6 +2608,7 @@ def main(page: ft.Page):
         page.controls.clear()
         encabezado = ft.Text('CATÁLOGO DE MUNICIPIOS', size= 30)
         municipioSelectRegion.options = []
+        btnAgregarRegistro.visible=True
         btnAgregarRegistro.on_click = lambda _:municipioAdd()
         btnEditarRegistro.on_click = lambda _:municipioUpdate()
         btnCancelarAccionForm.on_click = lambda _:botonesCancelarAccionForm()
@@ -2647,7 +2652,7 @@ def main(page: ft.Page):
 
     def show_Depositos():
         page.controls.clear()
-        encabezado = ft.Text('CATÁLOGO DE DEPOSITOS', size= 30)
+        encabezado = ft.Text('CATÁLOGO DE DEPÓSITOS', size= 30)
         municipioSelectRegion.options = []
         btnAgregarRegistro.on_click = lambda _:depositoAdd()
         btnEditarRegistro.on_click = lambda _:depositoUpdate()
@@ -2751,7 +2756,7 @@ def main(page: ft.Page):
 
     def show_RolesDepositos():
         page.controls.clear()
-        encabezado = ft.Text('ROLES DE DEPOSITOS', size= 30)
+        encabezado = ft.Text('ROLES DE DEPÓSITOS', size= 30)
         drop_region.options = []
         drop_region.options = reg_options()
         page.add(encabezado)
@@ -3009,8 +3014,8 @@ def main(page: ft.Page):
         destinations= [
             ft.NavigationBarDestination(icon= ft.Icon(name=ft.Icons.APP_REGISTRATION, color=ft.Colors.WHITE), label='Catálogo de Regiones'),
             ft.NavigationBarDestination(icon= ft.Icon(name=ft.Icons.ACCOUNT_TREE, color=ft.Colors.WHITE), label= 'Catálogo de Municipios', bgcolor = ft.Colors.BLACK),
-            ft.NavigationBarDestination(icon= ft.Icon(name=ft.Icons.ADD_BUSINESS, color=ft.Colors.WHITE), label= 'Catálogo de Depositos', bgcolor = ft.Colors.GREEN_400),
-            ft.NavigationBarDestination(icon= ft.Icon(name=ft.Icons.ACCESS_TIME_FILLED_ROUNDED, color=ft.Colors.WHITE), label= 'Roles de Depositos'),
+            ft.NavigationBarDestination(icon= ft.Icon(name=ft.Icons.ADD_BUSINESS, color=ft.Colors.WHITE), label= 'Catálogo de Depósitos', bgcolor = ft.Colors.GREEN_400),
+            ft.NavigationBarDestination(icon= ft.Icon(name=ft.Icons.ACCESS_TIME_FILLED_ROUNDED, color=ft.Colors.WHITE), label= 'Roles de Depósitos'),
             # ft.NavigationBarDestination(icon= ft.Icon(name=ft.Icons.INFO_SHARP, color=ft.Colors.WHITE), label= 'Sanciones Depositos', visible= False),  # ACCOUNT_BOX, label= 'Sanciones Depositos')  # ADD_CARD_OUTLINED   # ADD_COMMENT
             ft.NavigationBarDestination(icon= ft.Icon(name=ft.Icons.COMMUTE, color=ft.Colors.WHITE), label= 'Formulario de Incidentes'),
             ft.NavigationBarDestination(icon= ft.Icon(name=ft.Icons.TABLE_CHART_OUTLINED, color=ft.Colors.WHITE), label= 'Tabla de Incidentes'),
