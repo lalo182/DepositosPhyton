@@ -8,6 +8,7 @@ import requests
 from bs4 import BeautifulSoup
 from geopy.geocoders import Nominatim
 import colorsys
+import hashlib
 
 
 from flet import *
@@ -130,6 +131,75 @@ def main(page: ft.Page):
             ),
         ],
     )
+
+    ############ LOGIN
+    style_logtext = ft.TextStyle(color=ft.Colors.BLACK, size=16)
+    text_alert = ft.Text(value="Acceso correcto", size=20, weight="bold", text_align="center", color=ft.Colors.RED, visible=False)
+    user = ft.TextField(label="Usuario", width=320, bgcolor=ft.Colors.WHITE, label_style=style_logtext, color=ft.Colors.BLACK, filled=True, border=ft.InputBorder.NONE, on_submit=lambda _: ingreso(show_login))
+    password = ft.TextField(label="Clave", width=320, password=True, can_reveal_password=True, bgcolor=ft.Colors.WHITE, label_style=style_logtext, color=ft.Colors.BLACK, filled=True, border= ft.InputBorder.NONE, on_submit=lambda _: ingreso(show_login))
+
+    def ingreso(dlg):
+        if len(password.value) > 0 and len(user.value) > 0:
+            query_mail = 'SELECT correo, clave FROM Usuario WHERE correo = ?'
+            get_data = run_query(query_mail,(str(user.value),))
+            if len(get_data)>0:
+                passwd = hashlib.sha256()
+                passwd.update(str(password.value).encode()) # cifrado de clave
+                if (passwd.hexdigest()) == get_data[0][1]:
+                    text_alert.value = 'Acceso correcto'
+                    text_alert.color = "#0ec51dac"
+                    page.close(dlg)
+                else:
+                    text_alert.value = 'Clave incorrecta'
+            else:
+                text_alert.value = 'Nombre de usuario incorrecto'
+        else:
+            text_alert.value = 'Debes llenar todos los campos'
+        text_alert.visible=True
+        text_alert.update()
+        
+        
+
+    login_content = ft.Container(
+                            width=1080,
+                            height=480,
+                            border_radius=10,
+                            bgcolor=ft.Colors.with_opacity,
+                            image=ft.DecorationImage(src='Textura3.png', alignment=ft.Alignment(0.0,0.0), scale=2, fit=ft.ImageFit.FILL),
+                            content=ft.Row(
+                                controls=[
+                                    ft.Column(controls=[
+                                        ft.Row(controls=[
+                                            ft.Container(
+                                                content= ft.Text('SIGDEC', size=52,weight=ft.FontWeight.BOLD, text_align=ft.Alignment(0.0,0.0), color=ft.Colors.WHITE)
+                                            ),
+                                            ft.Container(
+                                                content=ft.Image(src='camion-grua.png')
+                                            )], alignment=ft.Alignment(0.0,0.0),
+                                            expand=True
+                                        ),
+                                        ], alignment=ft.Alignment(0.0,0.0)
+                                    ),
+                                    ft.Column(controls=[
+                                        ft.Row(controls=[ft.Text('INICIAR SESIÓN', size=40,weight=ft.FontWeight.BOLD, text_align=ft.Alignment(0.0,0.0), color=ft.Colors.WHITE)], alignment=ft.MainAxisAlignment.CENTER, width=320),
+                                        ft.Row(controls=[user], alignment=ft.MainAxisAlignment.CENTER),
+                                        ft.Row(controls=[password], alignment=ft.MainAxisAlignment.CENTER),
+                                        ft.Row(controls=[ft.ElevatedButton(content=ft.Text(value='ENTRAR', color=ft.Colors.BLACK, size=16), width=320, on_click=lambda _: ingreso(show_login), bgcolor=ft.Colors.WHITE)], alignment=ft.MainAxisAlignment.CENTER),
+                                        ft.Row(controls=[text_alert], alignment=ft.MainAxisAlignment.CENTER)
+                                        ], alignment=ft.MainAxisAlignment.CENTER
+                                    )
+                                ], alignment=ft.MainAxisAlignment.CENTER, spacing=20, 
+                            )
+                        )
+    
+    show_login =  ft.AlertDialog(
+        modal=True,
+        open=True,
+        bgcolor='#0c312d',
+        content=login_content,
+
+    )
+    #####FIN LOGIN
 
     # page.bgcolor = ft.Colors.LIGHT_BLUE_100 # ft.Colors.BLUE_GREY_800
     page.title = 'DEPOSITOS VEHICULARES'
@@ -1947,6 +2017,7 @@ def main(page: ft.Page):
             diasm = recdelete(dep,diasm)
         else:
             diasm = recdelete(dep,diasm)
+            print(diasm)
         
         try:
             query_depsup = 'SELECT Id, RazonSocial FROM CatDepositoVehicular WHERE Id = ?'
@@ -1956,8 +2027,26 @@ def main(page: ft.Page):
             DepositoDDL.value = str(depsup[0][0])+'-'+depsup[0][1]
             CambioDDL.value=True
         except:
-            alerta('AVISO', 'No hay mas depositos disponibles')
-        page.close(dlg)
+            diasm = ['','','','','','','','','','','','','','','','','','','','','','','','','','','','','','','']
+            queryddep = 'SELECT Dep, Listadia FROM Reg_Roles WHERE act=1 AND mes=MONTH(GETDATE())+1 AND anio=YEAR(GETDATE()) AND regid=?'
+            ls = (RegionTxt.value).find('-')
+            reg = RegionTxt.value[:ls]
+            listdias = run_query(queryddep,(reg))
+            for elemento in listdias:
+                dias = elemento[1].split(',')
+                for dia in dias:
+                    diasm[int(dia)-1] = elemento[0]
+            diasm = recdelete('',diasm)
+            ls = (DepositoDDL.value).find('-')
+            iddep = int(DepositoDDL.value[:ls])
+
+            if len(diasm)>0:
+                cmbdep_Si(None, iddep)
+            else:    
+                alerta('AVISO', 'No hay mas depositos disponibles')
+
+        if dlg !=None:
+            page.close(dlg)
         page.update()
 
 
@@ -2403,7 +2492,7 @@ def main(page: ft.Page):
 
     # CONTROLES PARA EL FORMULARIO DE REGIONES
     regionId = ft.TextField(label='Id', width=70, read_only=True, height= 35, text_size=12)
-    regionNombre = ft.TextField(label='REGIÓN', width=280, height= 35, text_size=12)
+    regionNombre = ft.TextField(label='REGIÓN', width=280, text_size=12, multiline=True, min_lines=1, max_lines=3)
     regionActivo = ft.Checkbox(label='DISPONIBLE', visible= False) 
     
     # CONTROLES PARA EL FORMULARIO DE MUNICIPIOS
@@ -2451,7 +2540,7 @@ def main(page: ft.Page):
     NotaRespondiente = ft.TextField(label='NOTA DE RESPONDIENTE', width= 1010)
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
     Folio911 = ft.TextField(label='FOLIO DE 911', width=200)
-    EstatusIncidenteDDL = Dropdown(label= 'ESTATUS INCIDENTE *', width=350, enable_filter= True, editable= True, visible= False) 
+    EstatusIncidenteDDL = Dropdown(label= 'ESTATUS INCIDENTE *', width=350, enable_filter= True, editable= True) 
 
     # CONTROLES PARA EL FORMULARIO DE VEHICULOS DE INCIDENTES
     IdVehiculoIncidente = ft.TextField(label='Id', width= 70, read_only= True, visible= False)
@@ -2534,7 +2623,7 @@ def main(page: ft.Page):
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     btnActualizarEstatus = ft.CupertinoButton(content=textoActualizarEstatus, width=180, height=50, opacity_on_click=0.3, border_radius=10, visible= False, on_click= lambda _:estatusIncidenteUpdate(), bgcolor='#B2B2B1')
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
+    page.overlay.append(show_login)
 
     def on_navigation_change(e):
         selected_index = e.control.selected_index
@@ -2812,7 +2901,9 @@ def main(page: ft.Page):
         page.controls.clear()
         encabezado = ft.Text('REGISTRO DE INCIDENTES', size= 30)
         btnAgregarRegistro.on_click = lambda _:incidentesAdd()  
-        btnAgregarRegistro.visible = False      
+        btnAgregarRegistro.visible = False
+        btnEditarRegistro.visible = False
+        btnCancelarAccionForm.visible = False    
         btnEditarRegistro.on_click = lambda _:incidentesUpdate()
         btnCancelarAccionForm.on_click = lambda _:botonesCancelarAccionForm()
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
